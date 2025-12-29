@@ -7,19 +7,21 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=13.2.0"
+    "node": ">=18.0.0"
   },
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "node --test ./dist/**/*.test.js"
   },
   "dependencies": {
     "apache-arrow": "^21.1.0",
     "nice-grpc": "^2.1.14"
   },
   "devDependencies": {
+    "grpc-tools": "^1.13.1",
     "ts-proto": "^2.10.1",
     "typescript": "^5.9.3"
   }

@@ -1,9 +1,9 @@
 # Apache Arrow Flight Client for Node.js
 
+> ⚠️ Experimental — API may change before v1.0.0
+
 > 🚀 **Apache Arrow Flight client implementation for Node.js (TypeScript)**
 > Native gRPC-based client built on top of `apache-arrow`, `nice-grpc`, and official Arrow Flight protobuf definitions.
-
----
 
 ## ✨ Features
 
@@ -18,8 +18,6 @@
   * Arrow Java / C++ servers
 * ✅ Zero native dependencies (pure Node.js)
 
----
-
 ## 📦 Installation
 
 ```bash
@@ -27,8 +25,6 @@ npm install arrow-flight-client
 ```
 
 > Requires **Node.js ≥ 18**
-
----
 
 ## 🚀 Quick Start
 
@@ -40,8 +36,6 @@ import { FlightClient } from '@your-scope/arrow-flight-client'
 const client = new FlightClient('localhost:8815')
 ```
 
----
-
 ### List available flights
 
 ```ts
@@ -51,8 +45,6 @@ const flights = await listFlights(client)
 
 console.log(flights)
 ```
-
----
 
 ### Fetch Arrow Table (DoGet)
 
@@ -67,8 +59,6 @@ const table = await doGetTable(client, ticket)
 console.log(table.toString())
 ```
 
----
-
 ### Upload Arrow Table (DoPut)
 
 ```ts
@@ -82,8 +72,6 @@ const table = tableFromArrays({
 
 await doPutTable(client, table, ['example', 'table'])
 ```
-
----
 
 ## 📚 API
 
@@ -102,31 +90,21 @@ interface FlightClientOptions {
 }
 ```
 
----
-
-### `listFlights(client)`
+#### `listFlights(client)`
 
 Returns all available flights from the server.
 
----
-
-### `getFlightInfo(client, descriptor)`
+#### `getFlightInfo(client, descriptor)`
 
 Fetches metadata for a specific flight.
 
----
-
-### `doGetTable(client, ticket)`
+#### `doGetTable(client, ticket)`
 
 Fetches Arrow data via `DoGet` and returns an `apache-arrow` `Table`.
 
----
-
-### `doPutTable(client, table, path)`
+#### `doPutTable(client, table, path)`
 
 Uploads an Arrow `Table` via `DoPut`.
-
----
 
 ## 🔐 Authentication & Metadata
 
@@ -152,13 +130,30 @@ const client = new FlightClient('localhost:8815', {
   * `nice-grpc`
   * `ts-proto`
 
+#### Implementation details
+
+- Built on top of **ts-proto** generated Flight protobuf definitions
+- Uses **nice-grpc v2.x** (async generator–based API)
+- Strict TypeScript types (no `any`, no unsafe casts)
+- gRPC metadata is handled via client middleware
+
 ---
 
-## ⚠️ Limitations (current)
+## 📚 Build
 
-* `DoExchange` not yet implemented
-* IPC parsing currently buffers the full stream (streaming batches planned)
-* No server implementation (client only)
+* Build TS services from proto files.
+* See: https://github.com/stephenh/ts-proto
+
+```sh
+protoc \
+  --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto \
+  --proto_path=./contracts \
+  --ts_proto_out=./src/generated \
+  --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false \
+  --ts_proto_opt="env=node" \
+  --ts_proto_opt="esModuleInterop=true" \
+  ./contracts/*.proto
+```
 
 ---
 
@@ -166,38 +161,26 @@ const client = new FlightClient('localhost:8815', {
 
 * [ ] Proper Arrow IPC streaming (`RecordBatchReader`)
 * [ ] `DoExchange`
-* [ ] Middleware support
+* [*] Middleware support
 * [ ] TLS configuration helpers
-* [ ] Benchmarks vs Python Flight client
+
+#### Limitations (current)
+
+* `DoExchange` not yet implemented
+* IPC parsing currently buffers the full stream (streaming batches planned)
+* No server implementation (client only)
 
 ---
 
-## 🧪 Tested Against
+## 🚧 Project Status
 
-* PyArrow Flight Server
-* DuckDB Flight Server
+This library is currently **experimental**.
 
----
+- The Flight protocol implementation is functional
+- The API is **not yet considered stable**
+- Breaking changes may occur between minor releases
 
-## 🤝 Contributing
-
-Contributions are welcome!
-
-1. Fork the repo
-2. Create a feature branch
-3. Add tests if possible
-4. Open a PR
-
----
-
-## 📜 License
-
-Apache License 2.0
-Compatible with Apache Arrow project.
-
----
-
-## 🙌 Acknowledgements
+Once the API stabilizes, the project will follow **semantic versioning** starting from `v1.0.0`.
 
 * [Apache Arrow](https://arrow.apache.org/)
 * [nice-grpc](https://github.com/deeplay-io/nice-grpc)

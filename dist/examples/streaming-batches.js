@@ -7,16 +7,15 @@ async function main() {
     const flights = await (0, src_1.listFlights)(client);
     const ticket = flights[0].endpoint[0].ticket.ticket;
     const stream = client.grpc.doGet({ ticket });
-    const messageReader = new apache_arrow_1.MessageReader();
-    for await (const flightData of stream) {
-        if (!flightData.dataHeader || !flightData.dataBody) {
-            continue;
+    const chunks = [];
+    for await (const data of stream) {
+        if (data.dataBody) {
+            chunks.push(data.dataBody);
         }
-        const message = messageReader.readMessage(flightData.dataHeader, flightData.dataBody);
-        if (message?.isRecordBatch()) {
-            const batch = message.body;
-            console.log('Batch rows:', batch.length);
-        }
+    }
+    const reader = await apache_arrow_1.RecordBatchReader.from(Buffer.concat(chunks));
+    for await (const batch of reader) {
+        console.log('Batch rows:', batch.numRows);
     }
     await client.close();
 }

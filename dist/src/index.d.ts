@@ -1,4 +1,4 @@
-export { FlightClient } from './client/FlightClient';
-export { doGetTable } from './client/DoGet';
-export { doPutTable } from './client/DoPut';
-export { listFlights, getFlightInfo } from './client/Actions';
+export { FlightClient } from './client/flight-client';
+export { doGetTable } from './client/do-get';
+export { doPutTable } from './client/do-put';
+export { listFlights, getFlightInfo } from './client/actions';

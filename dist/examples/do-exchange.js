@@ -1,18 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const src_1 = require("../src");
+const Flight_1 = require("../src/generated/Flight");
 async function main() {
     const client = new src_1.FlightClient('localhost:8815');
-    const descriptor = {
-        type: 'PATH',
-        path: ['exchange']
-    };
     const stream = client.grpc.doExchange();
-    // Send request
     await stream.write({
-        flightDescriptor: descriptor
+        flightDescriptor: {
+            type: Flight_1.FlightDescriptor_DescriptorType.PATH,
+            path: ['exchange']
+        }
     });
-    // Read responses
     for await (const response of stream) {
         console.log('Received:', response);
     }

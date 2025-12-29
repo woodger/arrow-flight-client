@@ -1,21 +1,17 @@
 import { FlightClient } from '../src';
-import { FlightDescriptor } from '../src/generated/Flight';
+import { FlightDescriptor_DescriptorType } from '../src/generated/Flight';
 
 async function main() {
   const client = new FlightClient('localhost:8815');
-  const descriptor: FlightDescriptor = {
-    type: 'PATH',
-    path: ['exchange']
-  };
-
   const stream = client.grpc.doExchange();
 
-  // Send request
   await stream.write({
-    flightDescriptor: descriptor
+    flightDescriptor: {
+      type: FlightDescriptor_DescriptorType.PATH,
+      path: ['exchange']
+    }
   });
 
-  // Read responses
   for await (const response of stream) {
     console.log('Received:', response);
   }
