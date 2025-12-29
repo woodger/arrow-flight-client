@@ -8,6 +8,12 @@ const metadata_middleware_1 = require("./metadata-middleware");
 class FlightClient {
     channel;
     client;
+    /**
+     * Создаёт новый экземпляр FlightClient.
+     * @param address - Адрес gRPC-сервера Arrow Flight (например, "localhost:8815").
+     * @param options - Опции клиента, включая TLS и metadata для авторизации.
+     * @param grpcClient - собственный gRPC клиент для dependency injection, используется только для тестов.
+     */
     constructor(address, options = {}, grpcClient) {
         if (grpcClient) {
             this.client = grpcClient;
@@ -25,6 +31,9 @@ class FlightClient {
             : undefined);
         this.client = (0, nice_grpc_1.createClient)(Flight_1.FlightServiceDefinition, this.channel);
     }
+    /**
+     * Возвращает внутренний gRPC клиент (readonly).
+     */
     get grpc() {
         return this.client;
     }

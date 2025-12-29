@@ -1,24 +1,19 @@
 # Apache Arrow Flight Client for Node.js
 
+[![License](https://img.shields.io/npm/l/express.svg)](https://github.com/woodger/pwd-fs/blob/master/LICENSE)
+
 > ⚠️ Experimental — API may change before v1.0.0
 
-> 🚀 **Apache Arrow Flight client implementation for Node.js (TypeScript)**
-> Native gRPC-based client built on top of `apache-arrow`, `nice-grpc`, and official Arrow Flight protobuf definitions.
+Apache Arrow Flight client implementation for [Node.js®](https://nodejs.org).
+Native `gRPC-based` client built on top of `apache-arrow`, `nice-grpc`, and official Arrow Flight protobuf definitions.
 
-## ✨ Features
+To improve reliability and maintainability the code is based [TypeScript](https://www.typescriptlang.org).
 
-* ✅ Apache Arrow **Flight protocol**
-* ✅ **TypeScript-first**, fully typed API
-* ✅ Built on **official Arrow Flight `.proto`**
-* ✅ Streaming support (`DoGet`, `DoPut`)
-* ✅ Compatible with:
+## Getting Started
 
-  * PyArrow Flight Server
-  * DuckDB Flight
-  * Arrow Java / C++ servers
-* ✅ Zero native dependencies (pure Node.js)
+### Installation
 
-## 📦 Installation
+To use `Flight Client` in your project, run:
 
 ```bash
 npm install arrow-flight-client
@@ -26,7 +21,21 @@ npm install arrow-flight-client
 
 > Requires **Node.js ≥ 18**
 
-## 🚀 Quick Start
+## Features
+
+* Apache Arrow **Flight protocol**
+* **TypeScript-first**, fully typed API
+* Built on **official Arrow Flight `.proto`**
+* Streaming support (`DoGet`, `DoPut`)
+* Compatible with:
+
+  * PyArrow Flight Server
+  * DuckDB Flight
+  * Arrow `Java` / `C++` servers
+
+
+#### Table of Contents
+
 
 ### Create a client
 

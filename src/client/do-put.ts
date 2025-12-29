@@ -6,11 +6,21 @@ import {
   FlightData
 } from '../generated/Flight';
 
-export async function doPutTable(
-  client: FlightClient,
-  table,
-  path: string[]
-) {
+/**
+ * Выполняет doPut запрос к Flight-серверу.
+ * Позволяет отправлять данные на сервер в виде FlightData.
+ * @param data - объект FlightData для отправки.
+ * @returns AsyncIterableIterator<void> — поток для записи данных.
+ *
+ * Пример:
+ * ```ts
+ * const stream = client.grpc.doPut();
+ * await stream.write(flightData);
+ * await stream.end();
+ * ```
+ */
+
+export async function doPutTable(client: FlightClient, table, path: string[]) {
   const descriptor: FlightDescriptor = {
     type: FlightDescriptor_DescriptorType.PATH,
     path,
