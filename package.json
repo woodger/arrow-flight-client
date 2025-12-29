@@ -9,13 +9,14 @@
   "engines": {
     "node": ">=13.2.0"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
+    "apache-arrow": "^21.1.0",
     "nice-grpc": "^2.1.14"
   },
   "devDependencies": {

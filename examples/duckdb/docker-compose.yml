@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  duckdb-flight:
+    image: duckdb/duckdb
+    command: >
+      duckdb -c "
+      INSTALL flight;
+      LOAD flight;
+      CALL start_flight_server('0.0.0.0', 8815);
+      "
+    ports:
+      - "8815:8815"

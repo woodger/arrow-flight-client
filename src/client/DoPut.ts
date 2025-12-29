@@ -1,6 +1,6 @@
-import { tableToIPC } from 'apache-arrow'
-import type { FlightClient } from './FlightClient'
-import { FlightDescriptor, FlightData } from '../generated/Flight'
+import { tableToIPC } from 'apache-arrow';
+import type { FlightClient } from './FlightClient';
+import { FlightDescriptor, FlightData } from '../generated/Flight';
 
 export async function doPutTable(
   client: FlightClient,
@@ -12,15 +12,14 @@ export async function doPutTable(
     path
   }
 
-  const writer = client.grpc.doPut()
-
-  const ipc = tableToIPC(table)
+  const writer = client.grpc.doPut();
+  const ipc = tableToIPC(table);
 
   const data: FlightData = {
     flightDescriptor: descriptor,
     dataBody: ipc
-  }
+  };
 
-  await writer.write(data)
-  await writer.end()
+  await writer.write(data);
+  await writer.end();
 }

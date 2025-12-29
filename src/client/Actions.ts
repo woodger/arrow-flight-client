@@ -1,17 +1,19 @@
-import type { FlightClient } from './FlightClient'
-import { Empty, FlightDescriptor } from '../generated/Flight'
+import type { FlightClient } from './FlightClient';
+import { Empty, FlightDescriptor } from '../generated/Flight';
 
 export async function listFlights(client: FlightClient) {
-  const result = []
+  const result = [];
+
   for await (const flight of client.grpc.listFlights({} as Empty)) {
     result.push(flight)
   }
-  return result
+
+  return result;
 }
 
 export async function getFlightInfo(
   client: FlightClient,
   descriptor: FlightDescriptor
 ) {
-  return client.grpc.getFlightInfo(descriptor)
+  return client.grpc.getFlightInfo(descriptor);
 }

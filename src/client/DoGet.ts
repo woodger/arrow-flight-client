@@ -1,6 +1,6 @@
-import { tableFromIPC } from 'apache-arrow'
-import type { FlightClient } from './FlightClient'
-import { Ticket } from '../generated/Flight'
+import { tableFromIPC } from 'apache-arrow';
+import type { FlightClient } from './FlightClient';
+import { Ticket } from '../generated/Flight';
 
 export async function doGetTable(
   client: FlightClient,
@@ -10,16 +10,16 @@ export async function doGetTable(
     ticket
   }
 
-  const stream = client.grpc.doGet(request)
-
-  const chunks: Uint8Array[] = []
+  const stream = client.grpc.doGet(request);
+  const chunks: Uint8Array[] = [];
 
   for await (const message of stream) {
     if (message.dataBody) {
-      chunks.push(message.dataBody)
+      chunks.push(message.dataBody);
     }
   }
 
-  const buffer = Buffer.concat(chunks)
-  return tableFromIPC(buffer)
+  const buffer = Buffer.concat(chunks);
+  
+  return tableFromIPC(buffer);
 }
