@@ -1,6 +1,6 @@
 {
-  "name": "apache-arrow-flight",
-  "description": "Apache Arrow Flight - i'ts gRPC API plus protobuf",
+  "name": "arrow-flight-client",
+  "description": "Apache Arrow Flight Client for Node.js",
   "author": {
     "name": "Stanislav Potemkin",
     "email": "woodger@ya.ru"
@@ -9,7 +9,7 @@
   "engines": {
     "node": ">=13.2.0"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -19,7 +19,6 @@
     "nice-grpc": "^2.1.14"
   },
   "devDependencies": {
-    "arrow": "https://github.com/apache/arrow.git",
     "ts-proto": "^2.10.1",
     "typescript": "^5.9.3"
   }
