@@ -37,6 +37,9 @@ class FlightClient {
     get grpc() {
         return this.client;
     }
+    /**
+     * Закрывает соединение
+     */
     async close() {
         await this.channel.close();
     }

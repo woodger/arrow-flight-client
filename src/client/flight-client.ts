@@ -86,6 +86,9 @@ export class FlightClient {
     return this.client;
   }
 
+  /**
+   * Закрывает соединение
+   */
   async close() {
     await this.channel.close();
   }

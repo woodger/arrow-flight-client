@@ -48,5 +48,8 @@ export declare class FlightClient {
      * Возвращает внутренний gRPC клиент (readonly).
      */
     get grpc(): any;
+    /**
+     * Закрывает соединение
+     */
     close(): Promise<void>;
 }

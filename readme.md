@@ -2,12 +2,18 @@
 
 [![License](https://img.shields.io/npm/l/express.svg)](https://github.com/woodger/pwd-fs/blob/master/LICENSE)
 
+[![npm](https://nodei.co/npm/arrow-flight-client.png)](https://www.npmjs.com/package/arrow-flight-client)
+
 > ⚠️ Experimental — API may change before v1.0.0
 
 Apache Arrow Flight client implementation for [Node.js®](https://nodejs.org).
 Native `gRPC-based` client built on top of `apache-arrow`, `nice-grpc`, and official Arrow Flight protobuf definitions.
 
-To improve reliability and maintainability the code is based [TypeScript](https://www.typescriptlang.org).
+To improve reliability and maintainability the code is based [TypeScript](https://www.typescriptlang.org). Streaming support (`DoGet`, `DoPut`). Compatible with:
+
+  * PyArrow Flight Server
+  * DuckDB Flight
+  * Arrow `Java` / `C++` servers
 
 ## Getting Started
 
@@ -21,110 +27,136 @@ npm install arrow-flight-client
 
 > Requires **Node.js ≥ 18**
 
-## Features
-
-* Apache Arrow **Flight protocol**
-* **TypeScript-first**, fully typed API
-* Built on **official Arrow Flight `.proto`**
-* Streaming support (`DoGet`, `DoPut`)
-* Compatible with:
-
-  * PyArrow Flight Server
-  * DuckDB Flight
-  * Arrow `Java` / `C++` servers
-
 
 #### Table of Contents
 
+[class FlightClient](#class-flightclient)
 
-### Create a client
+* [constructor: new FlightClient(address, options)](#constructor-new-flightclientaddress-options)
 
-```ts
-import { FlightClient } from '@your-scope/arrow-flight-client'
+* [flightClient.close()](#flightclientclose)
 
-const client = new FlightClient('localhost:8815')
-```
+* [flightClient.grpc](#flightclientgrpc)
 
-### List available flights
+* [listFlights(client)](#listflightsclient)
 
-```ts
-import { listFlights } from '@your-scope/arrow-flight-client'
+* [getFlightInfo(client, descriptor)](#getflightinfoclient-descriptor)
 
-const flights = await listFlights(client)
+* [doGetTable(client, ticket)](#dogettableclient-ticket)
 
-console.log(flights)
-```
+* [doPutTable(client, table, path)](#doputtableclient-table-path)
 
-### Fetch Arrow Table (DoGet)
 
-```ts
-import { doGetTable } from '@your-scope/arrow-flight-client'
 
-const flight = flights[0]
-const ticket = flight.endpoint[0].ticket.ticket
+#### constructor: new FlightClient(address, options)
 
-const table = await doGetTable(client, ticket)
+- `address` <[String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)> The address of the Arrow Flight `gRPC` server (e.g. `localhost:8815`).
+- `options` <[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)>
+  - `tls` <[Boolean](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)> includes an implementation of the Transport Layer Security (TLS) and Secure Socket Layer (SSL) protocols, built on top of OpenSSL. **Default:** `false`.
+  - `metadata` **Default:** `undefined`.
 
-console.log(table.toString())
-```
-
-### Upload Arrow Table (DoPut)
+Create a client:
 
 ```ts
-import { doPutTable } from '@your-scope/arrow-flight-client'
-import { tableFromArrays } from 'apache-arrow'
-
-const table = tableFromArrays({
-  id: [1, 2, 3],
-  name: ['Alice', 'Bob', 'Carol']
-})
-
-await doPutTable(client, table, ['example', 'table'])
+import { FlightClient } from 'arrow-flight-client';
+s
+const client = new FlightClient('localhost:8815');
 ```
 
-## 📚 API
-
-### `FlightClient`
-
-```ts
-new FlightClient(address: string, options?: FlightClientOptions)
-```
-
-#### Options
-
-```ts
-interface FlightClientOptions {
-  tls?: boolean
-  metadata?: Record<string, string>
-}
-```
-
-#### `listFlights(client)`
-
-Returns all available flights from the server.
-
-#### `getFlightInfo(client, descriptor)`
-
-Fetches metadata for a specific flight.
-
-#### `doGetTable(client, ticket)`
-
-Fetches Arrow data via `DoGet` and returns an `apache-arrow` `Table`.
-
-#### `doPutTable(client, table, path)`
-
-Uploads an Arrow `Table` via `DoPut`.
-
-## 🔐 Authentication & Metadata
-
-You can pass metadata headers (e.g. auth tokens):
+Authentication & Metadata. You can pass metadata headers (e.g. auth tokens):
 
 ```ts
 const client = new FlightClient('localhost:8815', {
   metadata: {
     authorization: 'Bearer my-token'
   }
-})
+});
+```
+
+#### flightClient.close()
+
+- returns: <[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)> Following successful read, the `Promise` is resolved with an value with a `undefined`.
+
+Premature connection close before the response is received.
+
+#### flightClient.grpc
+
+Returns the internal `gRPC` client (readonly).
+
+
+#### listFlights(client)
+
+- `client` <[FlightClient](#constructor-new-flightclientaddress-options)> `gRPC` client.
+- returns: <[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)> Following successful read, the `Promise` is resolved with an value with a `Array`. List available flights.
+
+Returns all available flights from the server:
+
+```ts
+import { listFlights } from 'arrow-flight-client';
+
+const flights = await listFlights(client);
+console.log(flights);
+```
+
+#### getFlightInfo(client, descriptor)
+
+- `client` <[FlightClient](#constructor-new-flightclientaddress-options)> `gRPC` client.
+- `descriptor` <[FlightDescriptor](#flightdescriptor)> describing the desired Flight.
+- returns: <[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)> Fetches metadata for a specific flight.
+
+```ts
+import { getFlightInfo } from 'arrow-flight-client';
+
+const descriptor = {
+  type: FlightDescriptor_DescriptorType.PATH,
+  path: ['example']
+};
+const info = await getFlightInfo(client, descriptor);
+console.log(info);
+```
+
+#### doGetTable(client, ticket)
+
+- `client` <[FlightClient](#constructor-new-flightclientaddress-options)> `gRPC` client.
+- `ticket` <[Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)> containing the data set identifier.
+- returns: <[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)> data stream FlightData.
+
+Fetches Arrow Table via `DoGet` and returns an `apache-arrow`:
+
+```ts
+import { doGetTable } from 'arrow-flight-client';
+
+const flight = flights[0];
+const ticket = flight.endpoint[0].ticket.ticket;
+const table = await doGetTable(client, ticket);
+console.log(
+  table.toString()
+);
+```
+
+See `FlightData` stream:
+
+```ts
+for await (const batch of client.grpc.doGet(ticket)) {
+  console.log(batch);
+}
+```
+
+
+#### doPutTable(client, table, path)
+
+Uploads an Arrow `Table` via `DoPut`.
+
+```ts
+import { doPutTable } from 'arrow-flight-client';
+import { tableFromArrays } from 'apache-arrow';
+
+const table = tableFromArrays({
+  id: [1, 2, 3],
+  name: ['Alice', 'Bob', 'Carol']
+});
+
+await doPutTable(client, table, ['example', 'table']);
 ```
 
 ---
@@ -152,6 +184,7 @@ const client = new FlightClient('localhost:8815', {
 
 * Build TS services from proto files.
 * See: https://github.com/stephenh/ts-proto
+* Get proto files: https://github.com/apache/arrow
 
 ```sh
 protoc \
