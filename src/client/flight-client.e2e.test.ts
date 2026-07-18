@@ -1,13 +1,19 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Message, tableFromArrays, util } from 'apache-arrow';
+import { ClientError, createServer, Status } from 'nice-grpc';
+import type { CallContext } from 'nice-grpc';
 import { FlightClient } from './flight-client';
 import type { FlightGrpcClient } from './flight-client';
 import type { CallOptions } from 'nice-grpc';
 import { encodeFlightData } from './ipc';
 import { encodeDescriptor } from './protocol';
 import { pathDescriptor } from './types';
-import type { FlightData } from '../generated/Flight';
+import { FlightServiceDefinition } from '../generated/Flight';
+import type {
+  FlightData,
+  FlightServiceImplementation
+} from '../generated/Flight';
 
 describe('Flight client integration', () => {
   test('downloads FlightData as an Arrow table', async () => {
@@ -106,6 +112,114 @@ describe('Flight client integration', () => {
       await client.close();
     }
   });
+
+  test('sends configured metadata through the client middleware', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *listActions(_request, context: CallContext) {
+        const authorization = context.metadata.get('authorization');
+
+        yield {
+          type: typeof authorization === 'string' ? authorization : '',
+          description: ''
+        };
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`, {
+      metadata: { authorization: 'Bearer configured' }
+    });
+
+    try {
+      const actions = [];
+
+      for await (const action of client.listActions()) {
+        actions.push(action);
+      }
+
+      assert.deepStrictEqual(actions, [
+        { type: 'Bearer configured', description: '' }
+      ]);
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('receives a Flight message larger than four MiB when configured', async () => {
+    const rowCount = 700_000;
+    const expected = tableFromArrays({
+      value: new Float64Array(rowCount).fill(1.25)
+    });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('large')),
+      expected
+    )) {
+      messages.push(message);
+    }
+
+    assert.ok(messages.some(({ dataBody }) => dataBody.byteLength > 4 * 1024 * 1024));
+
+    const server = createServer({
+      'grpc.max_send_message_length': 8 * 1024 * 1024
+    });
+    server.add(FlightServiceDefinition, createFlightService({
+      async *doGet() {
+        yield* messages;
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`, {
+      maxReceiveMessageLength: 8 * 1024 * 1024
+    });
+
+    try {
+      const actual = await client.getTable(Buffer.from('large'));
+
+      assert.strictEqual(actual.numRows, rowCount);
+      assert.strictEqual(actual.getChild('value')?.get(0), 1.25);
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('enforces the configured outgoing gRPC message limit', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *doPut(request) {
+        for await (const message of request) {
+          void message;
+        }
+
+        yield* [];
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`, {
+      maxSendMessageLength: 1024
+    });
+    const table = tableFromArrays({ value: new Uint8Array(4096) });
+
+    try {
+      await assert.rejects(
+        client.putTable(pathDescriptor('limited'), table),
+        (error: unknown) => {
+          assert.ok(error instanceof ClientError);
+          assert.strictEqual(error.code, Status.RESOURCE_EXHAUSTED);
+          return true;
+        }
+      );
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
 });
 
 function createClientWithRaw(grpcClient: FlightGrpcClient): FlightClient {
@@ -113,4 +227,40 @@ function createClientWithRaw(grpcClient: FlightGrpcClient): FlightClient {
 
   Object.defineProperty(client, 'client', { value: grpcClient });
   return client;
+}
+
+function createFlightService(
+  overrides: Partial<FlightServiceImplementation>
+): FlightServiceImplementation {
+  const notImplemented = async (): Promise<never> => {
+    throw new Error('Not implemented');
+  };
+
+  return {
+    async *handshake() {
+      yield* [];
+    },
+    async *listFlights() {
+      yield* [];
+    },
+    getFlightInfo: notImplemented,
+    pollFlightInfo: notImplemented,
+    getSchema: notImplemented,
+    async *doGet() {
+      yield* [];
+    },
+    async *doPut() {
+      yield* [];
+    },
+    async *doExchange() {
+      yield* [];
+    },
+    async *doAction() {
+      yield* [];
+    },
+    async *listActions() {
+      yield* [];
+    },
+    ...overrides
+  };
 }

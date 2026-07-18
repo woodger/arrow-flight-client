@@ -12,8 +12,9 @@
 import { credentials } from '@grpc/grpc-js';
 import {
   createChannel,
-  createClient,
+  createClientFactory,
   type Channel,
+  type ChannelOptions,
   type Client
 } from 'nice-grpc';
 import type { CallOptions } from 'nice-grpc';
@@ -62,16 +63,27 @@ export class FlightClient {
 
   constructor(address: string, options: FlightClientOptions = {}) {
     const channelCredentials = createCredentials(options);
-    const clientMiddleware = options.metadata
-      ? [metadataMiddleware(options.metadata)]
-      : undefined;
+    const channelOptions: ChannelOptions = {};
+
+    if (options.maxReceiveMessageLength !== undefined) {
+      channelOptions['grpc.max_receive_message_length'] =
+        options.maxReceiveMessageLength;
+    }
+    if (options.maxSendMessageLength !== undefined) {
+      channelOptions['grpc.max_send_message_length'] =
+        options.maxSendMessageLength;
+    }
 
     this.channel = createChannel(
       address,
       channelCredentials,
-      clientMiddleware ? { clientMiddleware } : undefined
+      channelOptions
     );
-    this.client = createClient(FlightServiceDefinition, this.channel);
+    const clientFactory = options.metadata
+      ? createClientFactory().use(metadataMiddleware(options.metadata))
+      : createClientFactory();
+
+    this.client = clientFactory.create(FlightServiceDefinition, this.channel);
   }
 
   /** Low-level generated client for protocol extensions not covered by this facade. */

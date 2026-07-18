@@ -98,7 +98,14 @@ for await (const result of client.doPut(
 
 `doPut()` also accepts synchronous and asynchronous `RecordBatch` iterables.
 Pass `FlightPutOptions.schema` when an iterable may be empty. `putTable()` is a
-convenience method that collects all `PutResult` messages.
+convenience method that collects all `PutResult` messages. When
+`FlightPutOptions.appMetadata` is present, the client sends it as a standalone
+Flight metadata message immediately after the schema, including for an empty
+iterable.
+
+Keep individual record batches bounded. One logical payload may span any number
+of batches in the same `DoPut` stream; the client streams them incrementally but
+does not split a `RecordBatch` automatically.
 
 ## TLS, Metadata, And Cancellation
 
@@ -111,7 +118,9 @@ const client = new FlightClient('flight.example.com:443', {
   },
   metadata: {
     authorization: 'Bearer my-token'
-  }
+  },
+  maxReceiveMessageLength: 64 * 1024 * 1024,
+  maxSendMessageLength: 64 * 1024 * 1024
 });
 
 const controller = new AbortController();
@@ -126,7 +135,11 @@ const info = await client.getFlightInfo(descriptor, {
 ```
 
 Per-call metadata replaces configured values with the same key. A TLS private
-key and certificate chain must be provided together for mutual TLS.
+key and certificate chain must be provided together for mutual TLS. Message
+limits are expressed in bytes and map to gRPC receive/send limits. Allow room
+for the serialized `FlightData` envelope above the Arrow body size; raising a
+limit does not replace bounded record batches. `-1` disables a limit and should
+be used cautiously with untrusted peers.
 
 ## Public API
 
@@ -156,7 +169,8 @@ The API boundaries and intentional limitations are described in the
 - `Handshake` and `DoExchange` currently require the raw API;
 - endpoint location routing is not automatic; `DoGet` uses the current client;
 - transport failures are currently exposed as `nice-grpc` errors;
-- the project does not yet publish a verified server compatibility matrix.
+- CI interoperability coverage currently targets PyArrow 24 on Linux, not a
+  multi-version server compatibility matrix.
 
 ## Development
 
@@ -172,6 +186,15 @@ npm test
 Tests run against compiled JavaScript, so run `npm run build` before `npm test`
 after changing TypeScript sources. Package publication invokes the build through
 `prepack`.
+
+The live Node-to-PyArrow suite is separate from the unit-test command. Install
+its pinned Python dependency, build, and run it explicitly:
+
+```sh
+python3 -m pip install -r test/pyarrow/requirements.txt
+npm run build
+npm run test:pyarrow
+```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).
 [`src/generated/Flight.ts`](./src/generated/Flight.ts) is generated code and

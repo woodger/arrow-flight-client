@@ -1,8 +1,17 @@
 {
   "name": "arrow-flight-client",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Apache Arrow Flight Client for Node.js",
-  "keywords": [],
+  "keywords": [
+    "apache-arrow",
+    "arrow-flight",
+    "arrow-ipc",
+    "flight-rpc",
+    "grpc",
+    "protobuf",
+    "record-batch",
+    "columnar-data"
+  ],
   "author": {
     "name": "Stanislav Potemkin",
     "email": "woodger@ya.ru"
@@ -34,6 +43,7 @@
     "build": "tsc",
     "prepack": "tsc",
     "test": "fwa --prune",
+    "test:pyarrow": "node --test dist/client/flight-client.pyarrow.e2e.js",
     "lint": "eslint"
   },
   "dependencies": {
