@@ -49,6 +49,7 @@ describe('class FlightClient', () => {
       appMetadata: Buffer.alloc(0)
     };
     
+    assert.ok(data.flightDescriptor);
     assert.strictEqual(data.flightDescriptor.type, FlightDescriptor_DescriptorType.PATH);
     assert.ok(Buffer.isBuffer(data.dataBody));
     assert.deepStrictEqual([...data.dataBody], [1,2,3]);

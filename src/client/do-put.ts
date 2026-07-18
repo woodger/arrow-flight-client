@@ -1,4 +1,5 @@
 import { tableToIPC } from 'apache-arrow';
+import type { Table } from 'apache-arrow';
 import type { FlightClient } from './flight-client';
 import {
   FlightDescriptor,
@@ -9,25 +10,23 @@ import {
 /**
  * Выполняет doPut запрос к Flight-серверу.
  * Позволяет отправлять данные на сервер в виде FlightData.
- * @param data - объект FlightData для отправки.
- * @returns AsyncIterableIterator<void> — поток для записи данных.
+ * @param table - таблица Arrow для отправки.
+ * @param path - путь FlightDescriptor для загружаемой таблицы.
+ * @returns Promise<void>, который разрешается после завершения потока ответов.
  *
  * Пример:
  * ```ts
- * const stream = client.grpc.doPut();
- * await stream.write(flightData);
- * await stream.end();
+ * await doPutTable(client, table, ['example']);
  * ```
  */
 
-export async function doPutTable(client: FlightClient, table, path: string[]) {
+export async function doPutTable(client: FlightClient, table: Table, path: string[]) {
   const descriptor: FlightDescriptor = {
     type: FlightDescriptor_DescriptorType.PATH,
     path,
     cmd: Buffer.alloc(0)
   };
 
-  const writer = client.grpc.doPut();
   const ipc = tableToIPC(table);
 
   const data: FlightData = {
@@ -37,6 +36,11 @@ export async function doPutTable(client: FlightClient, table, path: string[]) {
     appMetadata: Buffer.alloc(0)
   };
 
-  await writer.write(data);
-  await writer.end();
+  async function* request() {
+    yield data;
+  }
+
+  for await (const response of client.grpc.doPut(request())) {
+    void response;
+  }
 }

@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+These changes are planned for the `0.0.7` release.
+
 ### Added
 
+- Added explicit runtime dependencies for protobuf wire support and direct
+  gRPC imports.
 - Added ESLint with TypeScript support and a project lint command.
 - Added `fwa` for compiled TypeScript test discovery and stale-test pruning.
 - Added a `prepack` build step for package publication.
@@ -20,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Lowered the package runtime requirement from Node.js `>=18.0.0` to
   `>=16.9.0` while requiring Node.js `>=20.19.0` for repository development.
+- Enabled strict TypeScript checks, Node.js module resolution, and direct
+  `src/` to `dist/` compilation.
+- Replaced the untyped low-level gRPC client surface with the generated
+  `nice-grpc` client type.
+- Updated `nice-grpc` to 2.1.16.
 - Upgraded the TypeScript development toolchain to TypeScript 6 and ESLint 9.
 - Reworked the README around the current public API, development workflow,
   limitations, licensing, and project disclaimer.
@@ -30,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed the direct `ts-proto` development dependency.
 - Removed stale lowercase duplicates of generated Flight build artifacts.
+- Removed tracked build output from the legacy `dist/src` and `dist/examples`
+  layout.
+
+### Fixed
+
+- Updated `DoPut` to use the async-iterable bidirectional streaming contract
+  provided by `nice-grpc`.
+- Allowed `FlightClient.close()` to safely handle an injected client that does
+  not own a gRPC channel.
 
 ## [0.0.6] - 2026-01-02
 

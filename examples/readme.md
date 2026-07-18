@@ -5,7 +5,7 @@ the Arrow Flight client with common `Flight servers`.
 
 ## Prerequisites
 
-- Node.js >= 18
+- Node.js >= 20.19.0
 - Python >= 3.9 (for PyArrow examples)
 - Docker (for DuckDB example)
 
@@ -13,7 +13,7 @@ Install dependencies:
 
 ```bash
 npm install
-````
+```
 
 ---
 

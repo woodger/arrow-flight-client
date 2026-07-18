@@ -1,4 +1,9 @@
-import { createChannel, createClient } from 'nice-grpc';
+import {
+  createChannel,
+  createClient,
+  type Channel,
+  type Client
+} from 'nice-grpc';
 import { credentials } from '@grpc/grpc-js';
 import { FlightServiceDefinition } from '../generated/Flight';
 import { metadataMiddleware } from './metadata-middleware';
@@ -41,9 +46,11 @@ export interface FlightClientOptions {
   metadata?: Record<string, string | string[]>
 }
 
+export type FlightGrpcClient = Client<typeof FlightServiceDefinition>;
+
 export class FlightClient {
-  private channel;
-  private client;
+  private readonly channel?: Channel;
+  private readonly client: FlightGrpcClient;
 
   /**
    * Создаёт новый экземпляр FlightClient.
@@ -51,7 +58,11 @@ export class FlightClient {
    * @param options - Опции клиента, включая TLS и metadata для авторизации.
    * @param grpcClient - собственный gRPC клиент для dependency injection, используется только для тестов.
    */
-  constructor(address: string, options: FlightClientOptions = {}, grpcClient?: any) {
+  constructor(
+    address: string,
+    options: FlightClientOptions = {},
+    grpcClient?: FlightGrpcClient
+  ) {
     if (grpcClient) {
       this.client = grpcClient;
       return;
@@ -82,7 +93,7 @@ export class FlightClient {
   /**
    * Возвращает внутренний gRPC клиент (readonly).
    */
-  get grpc() {
+  get grpc(): FlightGrpcClient {
     return this.client;
   }
 
@@ -90,6 +101,6 @@ export class FlightClient {
    * Закрывает соединение
    */
   async close() {
-    await this.channel.close();
+    await this.channel?.close();
   }
 }
