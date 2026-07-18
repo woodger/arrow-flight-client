@@ -103,6 +103,7 @@ Tests run against compiled JavaScript, so run `npm run build` before `npm test` 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto). [`src/generated/Flight.ts`](./src/generated/Flight.ts) is generated code and must not be edited manually.
 
 Development and review rules are documented in the [project policies](./docs/policy/index.md).
+Release history is maintained in the [changelog](./CHANGELOG.md).
 
 ## Project Status
 

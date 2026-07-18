@@ -36,6 +36,23 @@ Navigation documents must help find the source of truth, not become a second REA
 
 Examples demonstrate intended usage but do not override the public exports, types, or tested behavior.
 
+## Changelog
+
+[`CHANGELOG.md`](../../CHANGELOG.md) follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+Every notable change must be added to `Unreleased` under the appropriate heading:
+
+- `Added` for new capabilities;
+- `Changed` for changes to existing behavior or contracts;
+- `Deprecated` for capabilities scheduled for removal;
+- `Removed` for removed capabilities;
+- `Fixed` for defect corrections;
+- `Security` for vulnerability fixes.
+
+The changelog is written for package users. It must describe observable changes and must not become a raw commit log.
+
+When a version is published, move its entries from `Unreleased` into a version section using the `YYYY-MM-DD` release date. Keep an empty `Unreleased` section at the top and update the comparison links at the bottom of the file.
+
 ## Minimum Rule
 
 Markdown must answer the question "where is the current contract and how should it be used". The contract itself must live where it is verified by runtime or tests.
