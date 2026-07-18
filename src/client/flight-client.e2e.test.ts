@@ -113,6 +113,134 @@ describe('Flight client integration', () => {
     }
   });
 
+  test('reports expired unary calls as DEADLINE_EXCEEDED', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      getFlightInfo: async (_request, context) => {
+        return waitForCancellation(context.signal);
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      await assert.rejects(
+        client.getFlightInfo(pathDescriptor('expired'), {
+          deadline: new Date(Date.now() + 100)
+        }),
+        (error: unknown) => {
+          assert.ok(error instanceof ClientError);
+          assert.strictEqual(error.code, Status.DEADLINE_EXCEEDED);
+          assert.strictEqual(
+            error.path,
+            '/arrow.flight.protocol.FlightService/GetFlightInfo'
+          );
+          return true;
+        }
+      );
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('reports expired streaming calls as DEADLINE_EXCEEDED', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *listActions(_request, context) {
+        await waitForCancellation(context.signal);
+        yield* [];
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      await assert.rejects(
+        async () => {
+          for await (const action of client.listActions({
+            deadline: new Date(Date.now() + 100)
+          })) {
+            void action;
+          }
+        },
+        (error: unknown) => {
+          assert.ok(error instanceof ClientError);
+          assert.strictEqual(error.code, Status.DEADLINE_EXCEEDED);
+          assert.strictEqual(
+            error.path,
+            '/arrow.flight.protocol.FlightService/ListActions'
+          );
+          return true;
+        }
+      );
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('rejects a streaming call whose deadline passed before iteration', async () => {
+    let started = false;
+    const grpcClient = {
+      async *listActions() {
+        started = true;
+        yield { type: 'unexpected', description: '' };
+      }
+    } as unknown as FlightGrpcClient;
+    const client = createClientWithRaw(grpcClient);
+    const actions = client.listActions({ deadline: new Date(0) });
+
+    try {
+      await assert.rejects(
+        async () => {
+          for await (const action of actions) {
+            void action;
+          }
+        },
+        (error: unknown) => {
+          assert.ok(error instanceof ClientError);
+          assert.strictEqual(error.code, Status.DEADLINE_EXCEEDED);
+          return true;
+        }
+      );
+      assert.strictEqual(started, false);
+    }
+    finally {
+      await client.close();
+    }
+  });
+
+  test('keeps caller cancellation as AbortError with a deadline', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({}));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+    const controller = new AbortController();
+    controller.abort();
+
+    try {
+      await assert.rejects(
+        client.getFlightInfo(pathDescriptor('cancelled'), {
+          signal: controller.signal,
+          deadline: new Date(Date.now() + 10_000)
+        }),
+        (error: unknown) => {
+          assert.ok(error instanceof Error);
+          assert.strictEqual(error.name, 'AbortError');
+          assert.ok(!(error instanceof ClientError));
+          return true;
+        }
+      );
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
   test('sends configured metadata through the client middleware', async () => {
     const server = createServer();
     server.add(FlightServiceDefinition, createFlightService({
@@ -263,4 +391,21 @@ function createFlightService(
     },
     ...overrides
   };
+}
+
+function waitForCancellation(signal: AbortSignal): Promise<never> {
+  return new Promise((_, reject) => {
+    const cancel = () => {
+      const error = new Error('Call cancelled');
+      error.name = 'AbortError';
+      reject(error);
+    };
+
+    if (signal.aborted) {
+      cancel();
+    }
+    else {
+      signal.addEventListener('abort', cancel, { once: true });
+    }
+  });
 }

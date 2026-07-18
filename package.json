@@ -1,6 +1,6 @@
 {
   "name": "arrow-flight-client",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Apache Arrow Flight Client for Node.js",
   "keywords": [
     "apache-arrow",
@@ -49,13 +49,16 @@
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.1",
     "@grpc/grpc-js": "^1.14.4",
-    "apache-arrow": "^21.1.0",
     "nice-grpc": "^2.1.16",
     "nice-grpc-common": "^2.0.3"
+  },
+  "peerDependencies": {
+    "apache-arrow": "^21.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@types/node": "^26.0.1",
+    "apache-arrow": "^21.1.0",
     "eslint": "^9.39.4",
     "fwa": "^2.0.6",
     "globals": "^17.7.0",

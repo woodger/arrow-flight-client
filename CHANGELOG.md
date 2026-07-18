@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Expired call deadlines now reject with a nice-grpc `ClientError` using the
+  `DEADLINE_EXCEEDED` status, while caller cancellation remains an `AbortError`.
+- Declared `apache-arrow@^21.1.0` as a required peer dependency so applications
+  and the client use one supported Arrow runtime instance.
+
+### Fixed
+
+- Included referenced documentation in the npm package so relative README
+  links remain available after installation.
+
 ## [0.0.8] - 2026-07-18
 
 ### Added

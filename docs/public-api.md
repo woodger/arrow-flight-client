@@ -20,6 +20,11 @@ Low-level protobuf and gRPC access is intentionally separated through the
 hatch is intended for Flight operations or application extensions that do not
 yet have a high-level wrapper.
 
+`apache-arrow@^21.1.0` is a required peer dependency. The application and
+client must resolve one runtime instance because Arrow tables, record batches,
+schemas, and IPC writers rely on runtime class identity. Values from a second
+physical copy or unsupported major version are not a compatible public input.
+
 ## Streaming Model
 
 Flight response streams remain `AsyncIterable` values. `listFlights()`,
@@ -53,7 +58,9 @@ oversized `RecordBatch` automatically.
 `FlightClient` owns one gRPC channel. `close()` is idempotent, and new
 high-level calls are rejected after closure. Client metadata applies to every
 call; per-call metadata replaces matching configured keys. Calls support an
-`AbortSignal` and an absolute `Date` deadline.
+`AbortSignal` and an absolute `Date` deadline. Caller cancellation rejects with
+`AbortError`; deadline expiry rejects with a nice-grpc `ClientError` whose code
+is `DEADLINE_EXCEEDED`.
 
 TLS uses platform roots by default and accepts custom roots plus an optional
 mutual-TLS identity. A private key and certificate chain form one identity and
@@ -67,7 +74,7 @@ multiple bounded record batches with transport-envelope headroom.
 ## Current Scope
 
 The high-level API covers discovery, `GetFlightInfo`, `PollFlightInfo`,
-`GetSchema`, `DoGet`, `DoPut`, and actions. Handshake flows, `DoExchange`,
-automatic endpoint location routing, and normalized transport errors remain
-outside the high-level contract and are available only through the raw API
-where the protocol supports them.
+`GetSchema`, `DoGet`, `DoPut`, and actions. Handshake flows and `DoExchange`
+require the raw API, and automatic endpoint location routing is not implemented.
+Transport failures remain nice-grpc errors; deadline expiry is explicitly
+reported with the `DEADLINE_EXCEEDED` status.

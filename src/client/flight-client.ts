@@ -11,8 +11,10 @@
 
 import { credentials } from '@grpc/grpc-js';
 import {
+  ClientError,
   createChannel,
   createClientFactory,
+  Status,
   type Channel,
   type ChannelOptions,
   type Client
@@ -53,7 +55,11 @@ export type FlightGrpcClient = Client<typeof FlightServiceDefinition>;
 interface PreparedCall {
   readonly options: CallOptions
   readonly dispose: () => void
+  readonly ensureActive: () => void
+  readonly normalizeError: (error: unknown) => unknown
 }
+
+type FlightMethodName = keyof typeof FlightServiceDefinition.methods;
 
 export class FlightClient {
   private readonly channel: Channel;
@@ -101,13 +107,17 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightInfo> {
     this.assertOpen();
-    const call = prepareCall(options);
+    const call = prepareCall(options, 'listFlights');
 
     try {
       return mapStream(
-        this.client.listFlights(
-          { expression: Buffer.from(criteria) },
-          call.options
+        normalizeStreamErrors(
+          this.client.listFlights(
+            { expression: Buffer.from(criteria) },
+            call.options
+          ),
+          call.ensureActive,
+          call.normalizeError
         ),
         decodeFlightInfo,
         call.dispose
@@ -115,7 +125,7 @@ export class FlightClient {
     }
     catch (error) {
       call.dispose();
-      throw error;
+      throw call.normalizeError(error);
     }
   }
 
@@ -124,7 +134,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): Promise<FlightInfo> {
     this.assertOpen();
-    const call = prepareCall(options);
+    const call = prepareCall(options, 'getFlightInfo');
 
     try {
       return decodeFlightInfo(
@@ -133,6 +143,9 @@ export class FlightClient {
           call.options
         )
       );
+    }
+    catch (error) {
+      throw call.normalizeError(error);
     }
     finally {
       call.dispose();
@@ -144,7 +157,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): Promise<FlightPollInfo> {
     this.assertOpen();
-    const call = prepareCall(options);
+    const call = prepareCall(options, 'pollFlightInfo');
 
     try {
       return decodePollInfo(
@@ -153,6 +166,9 @@ export class FlightClient {
           call.options
         )
       );
+    }
+    catch (error) {
+      throw call.normalizeError(error);
     }
     finally {
       call.dispose();
@@ -164,7 +180,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): Promise<Schema> {
     this.assertOpen();
-    const call = prepareCall(options);
+    const call = prepareCall(options, 'getSchema');
 
     try {
       const result = await this.client.getSchema(
@@ -172,6 +188,9 @@ export class FlightClient {
         call.options
       );
       return decodeSchema(result.schema);
+    }
+    catch (error) {
+      throw call.normalizeError(error);
     }
     finally {
       call.dispose();
@@ -183,17 +202,24 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): Promise<FlightStreamReader> {
     this.assertOpen();
-    const call = prepareCall(options);
+    const call = prepareCall(options, 'doGet');
 
     try {
       return await createFlightStreamReader(
-        this.client.doGet({ ticket: Buffer.from(ticket) }, call.options),
+        normalizeStreamErrors(
+          this.client.doGet(
+            { ticket: Buffer.from(ticket) },
+            call.options
+          ),
+          call.ensureActive,
+          call.normalizeError
+        ),
         call.dispose
       );
     }
     catch (error) {
       call.dispose();
-      throw error;
+      throw call.normalizeError(error);
     }
   }
 
@@ -211,7 +237,7 @@ export class FlightClient {
     options: FlightPutOptions = {}
   ): AsyncIterable<FlightPutResult> {
     this.assertOpen();
-    const call = prepareCall(options);
+    const call = prepareCall(options, 'doPut');
     const requests = encodeFlightData(
       encodeDescriptor(descriptor),
       source,
@@ -223,14 +249,18 @@ export class FlightClient {
 
     try {
       return mapStream(
-        this.client.doPut(requests, call.options),
+        normalizeStreamErrors(
+          this.client.doPut(requests, call.options),
+          call.ensureActive,
+          call.normalizeError
+        ),
         (result) => ({ appMetadata: Uint8Array.from(result.appMetadata) }),
         call.dispose
       );
     }
     catch (error) {
       call.dispose();
-      throw error;
+      throw call.normalizeError(error);
     }
   }
 
@@ -253,18 +283,22 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightActionResult> {
     this.assertOpen();
-    const call = prepareCall(options);
+    const call = prepareCall(options, 'doAction');
 
     try {
       return mapStream(
-        this.client.doAction(encodeAction(action), call.options),
+        normalizeStreamErrors(
+          this.client.doAction(encodeAction(action), call.options),
+          call.ensureActive,
+          call.normalizeError
+        ),
         (result) => ({ body: Uint8Array.from(result.body) }),
         call.dispose
       );
     }
     catch (error) {
       call.dispose();
-      throw error;
+      throw call.normalizeError(error);
     }
   }
 
@@ -272,18 +306,22 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightActionType> {
     this.assertOpen();
-    const call = prepareCall(options);
+    const call = prepareCall(options, 'listActions');
 
     try {
       return mapStream(
-        this.client.listActions({}, call.options),
+        normalizeStreamErrors(
+          this.client.listActions({}, call.options),
+          call.ensureActive,
+          call.normalizeError
+        ),
         ({ type, description }) => ({ type, description }),
         call.dispose
       );
     }
     catch (error) {
       call.dispose();
-      throw error;
+      throw call.normalizeError(error);
     }
   }
 
@@ -327,7 +365,10 @@ function createCredentials(options: FlightClientOptions) {
   );
 }
 
-function prepareCall(options: FlightCallOptions): PreparedCall {
+function prepareCall(
+  options: FlightCallOptions,
+  methodName: FlightMethodName
+): PreparedCall {
   const callOptions: CallOptions = {};
   const metadata = options.metadata
     ? createMetadata(options.metadata)
@@ -341,7 +382,29 @@ function prepareCall(options: FlightCallOptions): PreparedCall {
     callOptions.signal = preparedSignal.signal;
   }
 
-  return { options: callOptions, dispose: preparedSignal.dispose };
+  const normalizeError = (error: unknown): unknown => {
+    if (!preparedSignal.deadlineExceeded() || !isAbortError(error)) {
+      return error;
+    }
+
+    const method = FlightServiceDefinition.methods[methodName];
+    return new ClientError(
+      `/${FlightServiceDefinition.fullName}/${method.name}`,
+      Status.DEADLINE_EXCEEDED,
+      'Deadline exceeded'
+    );
+  };
+
+  return {
+    options: callOptions,
+    dispose: preparedSignal.dispose,
+    ensureActive: () => {
+      if (preparedSignal.signal?.aborted) {
+        throw normalizeError(createAbortError());
+      }
+    },
+    normalizeError
+  };
 }
 
 function createMetadata(headers: FlightMetadata): Metadata {
@@ -361,11 +424,16 @@ function createMetadata(headers: FlightMetadata): Metadata {
 function prepareSignal(
   signal: AbortSignal | undefined,
   deadline: Date | undefined
-): { readonly signal?: AbortSignal; readonly dispose: () => void } {
+): {
+  readonly signal?: AbortSignal
+  readonly dispose: () => void
+  readonly deadlineExceeded: () => boolean
+} {
   if (!deadline) {
     return {
       ...(signal ? { signal } : {}),
-      dispose: () => undefined
+      dispose: () => undefined,
+      deadlineExceeded: () => false
     };
   }
 
@@ -376,22 +444,73 @@ function prepareSignal(
   }
 
   const controller = new AbortController();
-  const abort = () => controller.abort();
-  const timeout = setTimeout(abort, Math.max(0, deadlineTime - Date.now()));
-  timeout.unref();
+  let cancellationSource: 'caller' | 'deadline' | undefined;
+  let timeout: NodeJS.Timeout | undefined;
+  const abortForCaller = () => {
+    if (!controller.signal.aborted) {
+      cancellationSource = 'caller';
+      controller.abort();
+    }
+  };
+  const abortForDeadline = () => {
+    if (!controller.signal.aborted) {
+      cancellationSource = 'deadline';
+      controller.abort();
+    }
+  };
 
   if (signal?.aborted) {
-    controller.abort();
+    abortForCaller();
+  }
+  else if (deadlineTime <= Date.now()) {
+    abortForDeadline();
   }
   else {
-    signal?.addEventListener('abort', abort, { once: true });
+    signal?.addEventListener('abort', abortForCaller, { once: true });
+    timeout = setTimeout(abortForDeadline, deadlineTime - Date.now());
+    timeout.unref();
   }
 
   return {
     signal: controller.signal,
     dispose: () => {
-      clearTimeout(timeout);
-      signal?.removeEventListener('abort', abort);
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+      signal?.removeEventListener('abort', abortForCaller);
+    },
+    deadlineExceeded: () => cancellationSource === 'deadline'
+  };
+}
+
+function isAbortError(error: unknown): boolean {
+  return typeof error === 'object'
+    && error !== null
+    && 'name' in error
+    && error.name === 'AbortError';
+}
+
+function createAbortError(): Error {
+  const error = new Error('The operation was aborted');
+  error.name = 'AbortError';
+  return error;
+}
+
+function normalizeStreamErrors<T>(
+  source: AsyncIterable<T>,
+  ensureActive: () => void,
+  normalizeError: (error: unknown) => unknown
+): AsyncIterable<T> {
+  return {
+    async *[Symbol.asyncIterator]() {
+      ensureActive();
+
+      try {
+        yield* source;
+      }
+      catch (error) {
+        throw normalizeError(error);
+      }
     }
   };
 }
