@@ -3,9 +3,14 @@
 > Type: Design. This document records the boundary and stability decisions for
 > the Node.js Arrow Flight client.
 
-The source of truth for package exports is [`src/index.ts`](../src/index.ts).
+The package entrypoint map is defined by [`package.json`](../package.json). The
+root and raw source surfaces are
+[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/index.ts)
+and
+[`src/raw.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/raw.ts).
 Observable stream behavior is protected by tests colocated with
-[`src/client/`](../src/client/), while the wire contract remains
+[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.9/src/client),
+while the wire contract remains
 [`contracts/Flight.proto`](../contracts/Flight.proto).
 
 ## API Boundary

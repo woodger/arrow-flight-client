@@ -24,12 +24,19 @@ Navigation documents must help find the source of truth, not become a second REA
 ## Project Sources Of Truth
 
 - package metadata, supported Node.js version, dependencies, entrypoints, and scripts: [`package.json`](../../package.json);
-- public package exports: [`src/index.ts`](../../src/index.ts);
-- client behavior: [`src/client/`](../../src/client/);
+- public package surfaces:
+  [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/index.ts)
+  and
+  [`src/raw.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/raw.ts);
+- client behavior:
+  [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.9/src/client);
 - Flight wire contract: [`contracts/Flight.proto`](../../contracts/Flight.proto);
-- generated TypeScript bindings: [`src/generated/Flight.ts`](../../src/generated/Flight.ts);
-- compiler settings: [`tsconfig.json`](../../tsconfig.json);
-- lint configuration: [`eslint.config.mjs`](../../eslint.config.mjs);
+- generated TypeScript bindings:
+  [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/generated/Flight.ts);
+- compiler settings:
+  [`tsconfig.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/tsconfig.json);
+- lint configuration:
+  [`eslint.config.mjs`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/eslint.config.mjs);
 - observable behavior: tests colocated with source files under `src/`.
 
 `src/generated/Flight.ts` reflects the protobuf generator output. It is a derived artifact, not a place for manual contract edits. Protocol changes start in `contracts/Flight.proto` and must use the repository's approved generation workflow.

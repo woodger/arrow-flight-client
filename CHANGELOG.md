@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.9] - 2026-07-18
+
 ### Changed
 
 - Expired call deadlines now reject with a nice-grpc `ClientError` using the
@@ -16,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Included referenced documentation in the npm package so relative README
-  links remain available after installation.
+- Included referenced documentation in the npm package and linked excluded
+  source and configuration files to the versioned GitHub tree.
 
 ## [0.0.8] - 2026-07-18
 
@@ -131,7 +133,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.8...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.9...HEAD
+[0.0.9]: https://github.com/woodger/arrow-flight-client/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/woodger/arrow-flight-client/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/woodger/arrow-flight-client/compare/70c990a8066f504a590204416e4cc580c1ca6c15...v0.0.7
 [0.0.6]: https://github.com/woodger/arrow-flight-client/compare/8e5e3c2747716b92adaa4a49d0d789923b9557c7...70c990a8066f504a590204416e4cc580c1ca6c15
