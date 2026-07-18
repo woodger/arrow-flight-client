@@ -177,8 +177,8 @@ The API boundaries and intentional limitations are described in the
 - `Handshake` and `DoExchange` currently require the raw API;
 - endpoint location routing is not automatic; `DoGet` uses the current client;
 - transport failures are currently exposed as `nice-grpc` errors;
-- CI interoperability coverage currently targets PyArrow 24 on Linux, not a
-  multi-version server compatibility matrix.
+- The live interoperability suite currently targets PyArrow 24 on Linux, not
+  a multi-version server compatibility matrix.
 
 ## Development
 

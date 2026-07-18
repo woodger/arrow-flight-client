@@ -7,7 +7,6 @@ Changes must not break:
 - build reproducibility
 - determinism
 - portability
-- CI
 - runtime behavior
 - file structure
 - gRPC channel and stream lifecycle
@@ -32,4 +31,5 @@ a change is forbidden if it violates these properties.
 
 - verify not only result correctness but also preservation of previous side effects
 - avoid changes that bind the project to a specific execution environment
-- separately evaluate the impact of a change on CI, file structure, and reproducibility
+- separately evaluate the impact of a change on the build and test workflow,
+  file structure, and reproducibility

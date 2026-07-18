@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Declared `apache-arrow@^21.1.0` as a required peer dependency so applications
   and the client use one supported Arrow runtime instance.
 
+### Removed
+
+- Removed the GitHub Actions CI workflow; repository checks and the live
+  PyArrow compatibility suite remain explicit local development responsibilities.
+
 ### Fixed
 
 - Included referenced documentation in the npm package and linked excluded
