@@ -110,6 +110,35 @@ describe('Flight IPC adapter', () => {
     assert.deepStrictEqual(actual.getChild('name')?.toArray(), ['one', 'two']);
   });
 
+  test('writes application metadata separately after the schema', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('metadata')),
+      table,
+      { appMetadata: Buffer.from('manifest') }
+    )) {
+      messages.push(message);
+    }
+
+    const schemaMessage = messages[0];
+    const metadataMessage = messages[1];
+
+    assert.ok(schemaMessage);
+    assert.ok(metadataMessage);
+    assert.ok(Message.decode(schemaMessage.dataHeader).isSchema());
+    assert.deepStrictEqual(schemaMessage.flightDescriptor?.path, ['metadata']);
+    assert.strictEqual(schemaMessage.appMetadata.byteLength, 0);
+    assert.strictEqual(metadataMessage.flightDescriptor, undefined);
+    assert.strictEqual(metadataMessage.dataHeader.byteLength, 0);
+    assert.strictEqual(metadataMessage.dataBody.byteLength, 0);
+    assert.strictEqual(metadataMessage.appMetadata.toString(), 'manifest');
+    assert.ok(messages.slice(2).some(({ dataHeader }) => (
+      Message.decode(dataHeader).isRecordBatch()
+    )));
+  });
+
   test('writes the provided schema for an empty iterable', async () => {
     const table = tableFromArrays({ id: [1] });
     const messages: FlightData[] = [];
@@ -124,6 +153,46 @@ describe('Flight IPC adapter', () => {
 
     assert.strictEqual(messages.length, 1);
     assert.ok(Message.decode(messages[0]?.dataHeader ?? []).isSchema());
+  });
+
+  test('writes application metadata for an empty iterable', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('empty')),
+      asAsync([]),
+      {
+        schema: table.schema,
+        appMetadata: Buffer.from('empty-manifest')
+      }
+    )) {
+      messages.push(message);
+    }
+
+    assert.strictEqual(messages.length, 2);
+    assert.ok(Message.decode(messages[0]?.dataHeader ?? []).isSchema());
+    assert.strictEqual(messages[1]?.dataHeader.byteLength, 0);
+    assert.strictEqual(messages[1]?.dataBody.byteLength, 0);
+    assert.strictEqual(
+      messages[1]?.appMetadata.toString(),
+      'empty-manifest'
+    );
+  });
+
+  test('does not write an empty metadata-only message', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('empty-metadata')),
+      table,
+      { appMetadata: new Uint8Array(0) }
+    )) {
+      messages.push(message);
+    }
+
+    assert.ok(messages.every(({ dataHeader }) => dataHeader.byteLength !== 0));
   });
 });
 

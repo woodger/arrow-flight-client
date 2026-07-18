@@ -27,6 +27,10 @@ export interface FlightTlsOptions {
 export interface FlightClientOptions {
   tls?: boolean | FlightTlsOptions
   metadata?: FlightMetadata
+  /** Maximum incoming gRPC message size in bytes. Use -1 for no limit. */
+  maxReceiveMessageLength?: number
+  /** Maximum outgoing gRPC message size in bytes. Use -1 for no limit. */
+  maxSendMessageLength?: number
 }
 
 export interface FlightCallOptions {

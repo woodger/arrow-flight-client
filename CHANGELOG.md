@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added explicit per-message gRPC receive and send size settings through
+  `FlightClientOptions`.
+- Added a Node-to-PyArrow 24 compatibility suite and CI gate for configured
+  metadata, large downloads, bounded uploads, and `DoPut` application metadata.
+
+### Fixed
+
+- Connected configured client metadata through the nice-grpc client factory so
+  it is sent on every RPC and remains overridable per call.
+- Sent `FlightPutOptions.appMetadata` in a standalone Flight metadata message
+  after the schema so PyArrow exposes it, including for empty uploads.
+
 ## [0.0.7] - 2026-07-18
 
 ### Added

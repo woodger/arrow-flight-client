@@ -18,7 +18,8 @@ Not:
 
 ## How To Run Tests
 
-Tests are written in TypeScript in `src/**/*.test.ts` or `src/**/*.spec.ts` and use the standard Node.js modules:
+Unit and mock integration tests are written in TypeScript in `src/**/*.test.ts`
+or `src/**/*.spec.ts` and use the standard Node.js modules:
 
 - `node:test`;
 - `node:assert`.
@@ -33,6 +34,20 @@ npm test
 The command contract lives in [`package.json`](../../package.json). `fwa --prune` discovers compiled tests, rejects stale source/output pairs, removes stale compiled test artifacts, and delegates execution to `node:test`.
 
 The published client supports the Node.js range declared in `package.json`. Repository development requires Node.js `>=20.19.0` because that is the minimum version supported by `fwa`.
+
+The live PyArrow compatibility suite is deliberately separate from the unit-test
+command. It requires the pinned dependency in
+[`test/pyarrow/requirements.txt`](../../test/pyarrow/requirements.txt) and runs
+after compilation with:
+
+```sh
+npm run test:pyarrow
+```
+
+The suite owns the server subprocess lifecycle and uses a dynamic local port.
+Its `*.pyarrow.e2e.ts` entrypoint stays outside the ordinary test filename
+patterns so `npm test` remains independent of Python and external Flight
+runtimes.
 
 ## Test Requirements
 

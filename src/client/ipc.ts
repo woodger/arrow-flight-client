@@ -44,6 +44,7 @@ export async function* encodeFlightData(
   options: EncodeFlightDataOptions = {}
 ): AsyncIterable<FlightData> {
   let messageIndex = 0;
+  let appMetadataSent = false;
 
   const emitIpc = function* (
     ipc: Uint8Array,
@@ -58,18 +59,33 @@ export async function* encodeFlightData(
       if (includeSchema || !message.isSchema()) {
         // Flight identifies a DoPut stream with a descriptor only on its first message.
         const firstMessage = messageIndex === 0;
-        const appMetadata = firstMessage && options.appMetadata
-          ? Buffer.from(options.appMetadata)
-          : Buffer.alloc(0);
 
         yield {
           flightDescriptor: firstMessage ? descriptor : undefined,
           // MessageReader removes stream framing; Flight expects the raw flatbuffer here.
           dataHeader: Buffer.from(Message.encode(message)),
-          appMetadata,
+          appMetadata: Buffer.alloc(0),
           dataBody: Buffer.from(body)
         };
         messageIndex++;
+
+        if (
+          message.isSchema() &&
+          options.appMetadata !== undefined &&
+          options.appMetadata.byteLength !== 0 &&
+          !appMetadataSent
+        ) {
+          // Arrow C++/PyArrow consumes the schema while opening its IPC reader,
+          // so send metadata separately, including when no batches follow.
+          yield {
+            flightDescriptor: undefined,
+            dataHeader: Buffer.alloc(0),
+            appMetadata: Buffer.from(options.appMetadata),
+            dataBody: Buffer.alloc(0)
+          };
+          messageIndex++;
+          appMetadataSent = true;
+        }
       }
 
       message = reader.readMessage();

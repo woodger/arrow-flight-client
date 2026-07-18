@@ -14,10 +14,15 @@ The script contract is defined in [`package.json`](../../package.json):
 
 - `npm run build` compiles TypeScript;
 - `npm test` runs compiled tests through `fwa --prune`;
+- `npm run test:pyarrow` runs the compiled live PyArrow compatibility suite;
 - `npm run lint` runs ESLint;
 - `prepack` compiles the package before packing or publication.
 
 Tests do not compile source files themselves. After a TypeScript change, run `npm run build` before `npm test`.
+
+The PyArrow command also expects an existing build and the pinned Python
+dependency from `test/pyarrow/requirements.txt`. It remains separate so the
+ordinary test command has no Python or live-server requirement.
 
 The existing `--prune` option may narrowly remove stale compiled test artifacts. This is an intentional part of the current test command and does not authorize other automatic cleanup.
 
