@@ -7,12 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.8] - 2026-07-18
+
 ### Added
 
 - Added explicit per-message gRPC receive and send size settings through
   `FlightClientOptions`.
 - Added a Node-to-PyArrow 24 compatibility suite and CI gate for configured
   metadata, large downloads, bounded uploads, and `DoPut` application metadata.
+
+### Changed
+
+- Synchronized the vendored Flight protocol contract byte-for-byte with Apache
+  Arrow 24.0.0.
+
+### Removed
+
+- Removed the unused vendored `field_behavior.proto` contract and both copies
+  of `descriptor.proto`.
 
 ### Fixed
 
@@ -107,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.7...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.8...HEAD
+[0.0.8]: https://github.com/woodger/arrow-flight-client/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/woodger/arrow-flight-client/compare/70c990a8066f504a590204416e4cc580c1ca6c15...v0.0.7
 [0.0.6]: https://github.com/woodger/arrow-flight-client/compare/8e5e3c2747716b92adaa4a49d0d789923b9557c7...70c990a8066f504a590204416e4cc580c1ca6c15
 [0.0.5]: https://github.com/woodger/arrow-flight-client/tree/8e5e3c2747716b92adaa4a49d0d789923b9557c7
