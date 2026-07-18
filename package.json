@@ -1,28 +1,40 @@
 {
   "name": "arrow-flight-client",
+  "version": "0.0.7",
   "description": "Apache Arrow Flight Client for Node.js",
+  "keywords": [],
   "author": {
     "name": "Stanislav Potemkin",
     "email": "woodger@ya.ru"
   },
   "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woodger/arrow-flight-client.git"
   },
-  "version": "0.0.6",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=16.9.0"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "node --test ./dist/**/*.test.js"
+    "prepack": "tsc",
+    "test": "fwa --prune",
+    "lint": "eslint"
   },
   "dependencies": {
     "apache-arrow": "^21.1.0",
     "nice-grpc": "^2.1.14"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^26.0.1",
+    "eslint": "^9.39.4",
+    "fwa": "^2.0.6",
+    "globals": "^17.7.0",
     "grpc-tools": "^1.13.1",
-    "ts-proto": "^2.10.1",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.0"
   }
 }

@@ -1,229 +1,122 @@
 # Apache Arrow Flight Client for Node.js
 
-[![License](https://img.shields.io/npm/l/express.svg)](https://github.com/woodger/pwd-fs/blob/master/LICENSE)
+[![License](https://img.shields.io/npm/l/arrow-flight-client.svg)](https://github.com/woodger/arrow-flight-client/blob/main/LICENSE)
+[![npm](https://img.shields.io/npm/v/arrow-flight-client.svg)](https://www.npmjs.com/package/arrow-flight-client)
 
-[![npm](https://nodei.co/npm/arrow-flight-client.png)](https://www.npmjs.com/package/arrow-flight-client)
+> Experimental: the public API may change before `1.0.0`.
 
-> ⚠️ Experimental — API may change before v1.0.0
+A TypeScript client for the [Apache Arrow Flight protocol](https://arrow.apache.org/docs/format/Flight.html), built on `apache-arrow`, `nice-grpc`, and the official Flight protobuf contract.
 
-Apache Arrow Flight client implementation for [Node.js®](https://nodejs.org).
-Native `gRPC-based` client built on top of `apache-arrow`, `nice-grpc`, and official Arrow Flight protobuf definitions.
+The package provides:
 
-To improve reliability and maintainability the code is based [TypeScript](https://www.typescriptlang.org). Streaming support (`DoGet`, `DoPut`). Compatible with:
+- a `FlightClient` that owns a gRPC channel;
+- optional TLS and request metadata;
+- helpers for `ListFlights`, `GetFlightInfo`, `DoGet`, and `DoPut`;
+- access to the generated low-level gRPC client through `flightClient.grpc`.
 
-  * PyArrow Flight Server
-  * DuckDB Flight
-  * Arrow `Java` / `C++` servers
+This is a client library only. It does not implement an Arrow Flight server.
 
-## Getting Started
+## Requirements
 
-### Installation
+- Node.js `>=16.9.0` for package consumers;
+- an Arrow Flight server for integration scenarios.
 
-To use `Flight Client` in your project, run:
+Contributors need Node.js `>=20.19.0` because the development test runner requires it.
 
-```bash
+## Installation
+
+```sh
 npm install arrow-flight-client
 ```
 
-> Requires **Node.js ≥ 18**
-
-
-#### Table of Contents
-
-[class FlightClient](#class-flightclient)
-
-* [constructor: new FlightClient(address, options)](#constructor-new-flightclientaddress-options)
-
-* [flightClient.close()](#flightclientclose)
-
-* [flightClient.grpc](#flightclientgrpc)
-
-* [listFlights(client)](#listflightsclient)
-
-* [getFlightInfo(client, descriptor)](#getflightinfoclient-descriptor)
-
-* [doGetTable(client, ticket)](#dogettableclient-ticket)
-
-* [doPutTable(client, table, path)](#doputtableclient-table-path)
-
-
-
-#### constructor: new FlightClient(address, options)
-
-- `address` <[String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)> The address of the Arrow Flight `gRPC` server (e.g. `localhost:8815`).
-- `options` <[Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)>
-  - `tls` <[Boolean](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)> includes an implementation of the Transport Layer Security (TLS) and Secure Socket Layer (SSL) protocols, built on top of OpenSSL. **Default:** `false`.
-  - `metadata` **Default:** `undefined`.
-
-Create a client:
+## Quick Start
 
 ```ts
-import { FlightClient } from 'arrow-flight-client';
-s
+import { FlightClient, listFlights } from 'arrow-flight-client';
+
 const client = new FlightClient('localhost:8815');
+
+try {
+  const flights = await listFlights(client);
+  console.log(flights);
+}
+finally {
+  await client.close();
+}
 ```
 
-Authentication & Metadata. You can pass metadata headers (e.g. auth tokens):
+### TLS And Metadata
+
+Set `tls` to use the default TLS credentials and use `metadata` for headers that must be sent with each call:
 
 ```ts
-const client = new FlightClient('localhost:8815', {
+const client = new FlightClient('flight.example.com:443', {
+  tls: true,
   metadata: {
     authorization: 'Bearer my-token'
   }
 });
 ```
 
-#### flightClient.close()
+Custom certificates and mutual TLS are not exposed through `FlightClientOptions` yet. See the [mTLS example](./examples/auth/mtls.ts) for low-level channel configuration.
 
-- returns: <[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)> Following successful read, the `Promise` is resolved with an value with a `undefined`.
+## Public API
 
-Premature connection close before the response is received.
+Consumers import the package root. Its public exports are defined by [`src/index.ts`](./src/index.ts):
 
-#### flightClient.grpc
+- `FlightClient` — creates and owns the gRPC channel;
+- `listFlights(client)` — collects the `ListFlights` response stream;
+- `getFlightInfo(client, descriptor)` — requests metadata for a descriptor;
+- `doGetTable(client, ticket)` — reads a Flight stream into an Arrow table;
+- `doPutTable(client, table, path)` — uploads an Arrow table to a path descriptor.
 
-Returns the internal `gRPC` client (readonly).
+`flightClient.grpc` is a low-level escape hatch to the generated `nice-grpc` client. Code that depends on generated protobuf types or methods beyond the exports above should be treated as unstable before `1.0.0`.
 
+More usage scenarios are available in [`examples/`](./examples/readme.md).
 
-#### listFlights(client)
+## Current Limitations
 
-- `client` <[FlightClient](#constructor-new-flightclientaddress-options)> `gRPC` client.
-- returns: <[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)> Following successful read, the `Promise` is resolved with an value with a `Array`. List available flights.
+- the API is not stable yet;
+- `doGetTable` buffers the complete response before creating a table;
+- there is no high-level `DoExchange` helper;
+- custom TLS credentials require low-level `nice-grpc` setup;
+- the project does not yet publish a verified server compatibility matrix.
 
-Returns all available flights from the server:
+## Development
 
-```ts
-import { listFlights } from 'arrow-flight-client';
-
-const flights = await listFlights(client);
-console.log(flights);
-```
-
-#### getFlightInfo(client, descriptor)
-
-- `client` <[FlightClient](#constructor-new-flightclientaddress-options)> `gRPC` client.
-- `descriptor` <[FlightDescriptor](#flightdescriptor)> describing the desired Flight.
-- returns: <[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)> Fetches metadata for a specific flight.
-
-```ts
-import { getFlightInfo } from 'arrow-flight-client';
-
-const descriptor = {
-  type: FlightDescriptor_DescriptorType.PATH,
-  path: ['example']
-};
-const info = await getFlightInfo(client, descriptor);
-console.log(info);
-```
-
-#### doGetTable(client, ticket)
-
-- `client` <[FlightClient](#constructor-new-flightclientaddress-options)> `gRPC` client.
-- `ticket` <[Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)> containing the data set identifier.
-- returns: <[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)> data stream FlightData.
-
-Fetches Arrow Table via `DoGet` and returns an `apache-arrow`:
-
-```ts
-import { doGetTable } from 'arrow-flight-client';
-
-const flight = flights[0];
-const ticket = flight.endpoint[0].ticket.ticket;
-const table = await doGetTable(client, ticket);
-console.log(
-  table.toString()
-);
-```
-
-See `FlightData` stream:
-
-```ts
-for await (const batch of client.grpc.doGet(ticket)) {
-  console.log(batch);
-}
-```
-
-
-#### doPutTable(client, table, path)
-
-Uploads an Arrow `Table` via `DoPut`.
-
-```ts
-import { doPutTable } from 'arrow-flight-client';
-import { tableFromArrays } from 'apache-arrow';
-
-const table = tableFromArrays({
-  id: [1, 2, 3],
-  name: ['Alice', 'Bob', 'Carol']
-});
-
-await doPutTable(client, table, ['example', 'table']);
-```
-
----
-
-## 🧠 Implementation Notes
-
-* This client uses **gRPC streaming** under the hood
-* Arrow data is transferred using **Arrow IPC**
-* Built on:
-
-  * `apache-arrow`
-  * `nice-grpc`
-  * `ts-proto`
-
-#### Implementation details
-
-- Built on top of **ts-proto** generated Flight protobuf definitions
-- Uses **nice-grpc v2.x** (async generator–based API)
-- Strict TypeScript types (no `any`, no unsafe casts)
-- gRPC metadata is handled via client middleware
-
----
-
-## 📚 Build
-
-* Build TS services from proto files.
-* See: https://github.com/stephenh/ts-proto
-* Get proto files: https://github.com/apache/arrow
+Install development dependencies:
 
 ```sh
-protoc \
-  --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto \
-  --proto_path=./contracts \
-  --ts_proto_out=./src/generated \
-  --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false \
-  --ts_proto_opt="env=node" \
-  --ts_proto_opt="esModuleInterop=true" \
-  ./contracts/*.proto
+npm install
 ```
 
----
+Run the repository checks:
 
-## 🛣 Roadmap
+```sh
+npm run lint
+npm run build
+npm test
+```
 
-* [ ] Proper Arrow IPC streaming (`RecordBatchReader`)
-* [ ] `DoExchange`
-* [*] Middleware support
-* [ ] TLS configuration helpers
+Tests run against compiled JavaScript, so run `npm run build` before `npm test` after changing TypeScript sources. `npm pack` and package publication invoke the build through `prepack`.
 
-#### Limitations (current)
+The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto). [`src/generated/Flight.ts`](./src/generated/Flight.ts) is generated code and must not be edited manually.
 
-* `DoExchange` not yet implemented
-* IPC parsing currently buffers the full stream (streaming batches planned)
-* No server implementation (client only)
+Development and review rules are documented in the [project policies](./docs/policy/index.md).
 
----
+## Project Status
 
-## 🚧 Project Status
+The package is moving toward a production-ready `1.0.0`. Protocol correctness, interoperability tests, a stable typed public API, and streaming Arrow IPC handling are the main remaining milestones.
 
-This library is currently **experimental**.
+## License
 
-- The Flight protocol implementation is functional
-- The API is **not yet considered stable**
-- Breaking changes may occur between minor releases
+[MIT](./LICENSE)
 
-Once the API stabilizes, the project will follow **semantic versioning** starting from `v1.0.0`.
+## Disclaimer
 
-* [Apache Arrow](https://arrow.apache.org/)
-* [nice-grpc](https://github.com/deeplay-io/nice-grpc)
-* [ts-proto](https://github.com/stephenh/ts-proto)
+This project is an independent implementation and is not affiliated with the
+Apache Software Foundation or its affiliates. Product and company names are
+used solely to indicate compatibility with public APIs.
+
+Information about third-party contracts and generated code is included in the
+[LICENSE](LICENSE).
