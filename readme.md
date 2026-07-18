@@ -18,6 +18,7 @@ This is a client library only. It does not implement an Arrow Flight server.
 ## Requirements
 
 - Node.js `>=16.9.0` for package consumers;
+- `apache-arrow@^21.1.0` as a direct peer dependency;
 - an Arrow Flight server for integration scenarios.
 
 Contributors need Node.js `>=20.19.0` because the development test runner requires it.
@@ -25,8 +26,13 @@ Contributors need Node.js `>=20.19.0` because the development test runner requir
 ## Installation
 
 ```sh
-npm install arrow-flight-client
+npm install arrow-flight-client apache-arrow@^21.1.0
 ```
+
+The application and client must resolve the same `apache-arrow` runtime
+instance. This keeps Arrow `Table`, `RecordBatch`, schema, and IPC writer class
+identities consistent; unsupported or duplicated major versions are not a
+compatible transport boundary.
 
 ## Quick Start
 
@@ -139,7 +145,9 @@ key and certificate chain must be provided together for mutual TLS. Message
 limits are expressed in bytes and map to gRPC receive/send limits. Allow room
 for the serialized `FlightData` envelope above the Arrow body size; raising a
 limit does not replace bounded record batches. `-1` disables a limit and should
-be used cautiously with untrusted peers.
+be used cautiously with untrusted peers. An expired deadline rejects with a
+nice-grpc `ClientError` whose code is `DEADLINE_EXCEEDED`; cancelling the
+caller-provided signal rejects with `AbortError`.
 
 ## Public API
 
@@ -169,8 +177,8 @@ The API boundaries and intentional limitations are described in the
 - `Handshake` and `DoExchange` currently require the raw API;
 - endpoint location routing is not automatic; `DoGet` uses the current client;
 - transport failures are currently exposed as `nice-grpc` errors;
-- CI interoperability coverage currently targets PyArrow 24 on Linux, not a
-  multi-version server compatibility matrix.
+- The live interoperability suite currently targets PyArrow 24 on Linux, not
+  a multi-version server compatibility matrix.
 
 ## Development
 
@@ -197,10 +205,10 @@ npm run test:pyarrow
 ```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).
-[`src/generated/Flight.ts`](./src/generated/Flight.ts) is generated code and
-must not be edited manually. Development and review rules are documented in the
-[project policies](./docs/policy/index.md), and release history is maintained in
-the [changelog](./CHANGELOG.md).
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/generated/Flight.ts)
+is generated code and must not be edited manually. Development and review
+rules are documented in the [project policies](./docs/policy/index.md), and
+release history is maintained in the [changelog](./CHANGELOG.md).
 
 ## Disclaimer
 
