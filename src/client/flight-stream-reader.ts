@@ -49,6 +49,8 @@ class DefaultFlightStreamReader implements FlightStreamReader {
       this.reader = await RecordBatchReader.from(
         decodeFlightData(this.source, (event) => this.events.push(event))
       );
+      // Arrow selects an async reader in from(), but the schema is unavailable
+      // until that reader explicitly opens the source.
       await this.reader.open();
       this.streamSchema = this.reader.schema;
       return this;
@@ -123,6 +125,8 @@ class DefaultFlightStreamReader implements FlightStreamReader {
           };
         }
 
+        // Arrow emits an internal zero-row placeholder for a schema-only stream;
+        // it has no corresponding FlightData batch and must not reach callers.
         if (!matchedBatch && next.value.numRows !== 0) {
           throw new FlightProtocolError(
             'Arrow produced a record batch without a matching FlightData message'

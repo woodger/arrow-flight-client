@@ -1,3 +1,14 @@
+/**
+ * Public client types isolate callers from generated Flight representations.
+ *
+ * Allowed here:
+ * - defining stable inputs and outputs for the high-level client;
+ * - expressing call, TLS, and stream constraints;
+ * - constructing project-owned descriptors.
+ *
+ * This file must not depend on generated protobuf types or transport lifecycle.
+ */
+
 import type { RecordBatch, Schema, Table } from 'apache-arrow';
 
 export type FlightMetadataValue = string | Uint8Array;
@@ -74,7 +85,7 @@ export type FlightDataSource =
 export interface FlightPutOptions extends FlightCallOptions {
   /** Required to upload an empty iterable. A Table already carries its schema. */
   schema?: Schema
-  /** Metadata attached to the initial schema message. */
+  /** Application metadata sent once when the DoPut stream is opened. */
   appMetadata?: Uint8Array
 }
 

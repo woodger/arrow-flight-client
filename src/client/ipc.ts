@@ -56,6 +56,7 @@ export async function* encodeFlightData(
       const body = reader.readMessageBody(message.bodyLength);
 
       if (includeSchema || !message.isSchema()) {
+        // Flight identifies a DoPut stream with a descriptor only on its first message.
         const firstMessage = messageIndex === 0;
         const appMetadata = firstMessage && options.appMetadata
           ? Buffer.from(options.appMetadata)
@@ -63,6 +64,7 @@ export async function* encodeFlightData(
 
         yield {
           flightDescriptor: firstMessage ? descriptor : undefined,
+          // MessageReader removes stream framing; Flight expects the raw flatbuffer here.
           dataHeader: Buffer.from(Message.encode(message)),
           appMetadata,
           dataBody: Buffer.from(body)
@@ -94,6 +96,9 @@ export async function* encodeFlightData(
       throw new FlightProtocolError('All DoPut record batches must use the same schema');
     }
 
+    // Arrow JS exposes an IPC stream writer, but not a public Flight payload
+    // encoder. Encode one batch at a time and omit repeated schema messages so
+    // iterable uploads remain incremental.
     const table = new Table(schema, [batch]);
     yield* emitIpc(tableToIPC(table, 'stream'), batchCount === 0);
     batchCount++;
@@ -161,6 +166,8 @@ export async function* decodeFlightData(
 }
 
 function encapsulateMessage(dataHeader: Uint8Array): Uint8Array {
+  // Flight removes the IPC continuation prefix and metadata length. Arrow's
+  // stream reader requires both fields and metadata padded to 8-byte alignment.
   const paddingLength = (8 - dataHeader.byteLength % 8) % 8;
   const result = Buffer.alloc(8 + dataHeader.byteLength + paddingLength);
 

@@ -1,13 +1,18 @@
+/**
+ * Client metadata middleware owns outgoing metadata composition.
+ *
+ * Allowed here:
+ * - translating configured headers into nice-grpc metadata;
+ * - preserving repeated values;
+ * - applying per-call values as overrides for matching configured keys.
+ *
+ * This file must not implement authentication flows or own channel lifecycle.
+ */
+
 import type { ClientMiddleware, CallOptions } from 'nice-grpc';
 import { Metadata } from 'nice-grpc-common';
 import type { FlightMetadata } from './types';
 
-/**
- * Client metadata middleware applies configured headers to every gRPC call.
- *
- * Per-call values replace configured values with the same key so callers can
- * override authentication or tracing metadata without duplicating defaults.
- */
 export function metadataMiddleware(headers: FlightMetadata): ClientMiddleware {
   return async function* (call, options: CallOptions) {
     const metadata = new Metadata();
