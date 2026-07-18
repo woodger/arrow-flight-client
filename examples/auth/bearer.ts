@@ -1,4 +1,4 @@
-import { FlightClient, listFlights } from '../../src';
+import { FlightClient } from '../../src';
 
 async function main() {
   const client = new FlightClient('localhost:8815', {
@@ -7,11 +7,14 @@ async function main() {
     }
   });
 
-  const flights = await listFlights(client);
-  
-  console.log(flights);
-
-  await client.close();
+  try {
+    for await (const flight of client.listFlights()) {
+      console.log(flight);
+    }
+  }
+  finally {
+    await client.close();
+  }
 }
 
 main().catch(console.error);

@@ -1,63 +1,33 @@
-# Examples — Apache Arrow Flight Client (Node.js)
+# Examples — Apache Arrow Flight Client for Node.js
 
-This directory contains runnable examples demonstrating how to use
-the Arrow Flight client with common `Flight servers`.
+These examples demonstrate the high-level API against an Arrow Flight server
+listening on `localhost:8815`.
 
 ## Prerequisites
 
-- Node.js >= 18
-- Python >= 3.9 (for PyArrow examples)
-- Docker (for DuckDB example)
+- Node.js `>=20.19.0` for the repository toolchain;
+- an Arrow Flight server with operations matching the selected example;
+- installed project dependencies.
 
-Install dependencies:
+The repository does not bundle a server. PyArrow, DuckDB extensions, and other
+Flight implementations may use different descriptors, tickets, actions, and
+authentication settings, so adapt those application-defined values to the
+server under test.
 
-```bash
-npm install
-````
+Run an example with a TypeScript runner of your choice or compile it as part of
+a local scenario. The repository build itself compiles only `src/`.
 
----
+## Scenarios
 
-## 1. PyArrow Flight Server
+- [`list-flights.ts`](./list-flights.ts) streams discovery results;
+- [`get-table.ts`](./get-table.ts) collects the first available endpoint into a
+  table;
+- [`streaming-batches.ts`](./streaming-batches.ts) consumes record batches
+  incrementally;
+- [`put-table.ts`](./put-table.ts) uploads a table and reads server metadata;
+- [`auth/`](./auth/readme.md) configures bearer metadata or mutual TLS;
+- [`duckdb/get-table.ts`](./duckdb/get-table.ts) shows a server-specific ticket.
 
-Start a local PyArrow Flight server:
-
-```bash
-cd pyarrow-server
-python server.py
-```
-
-Server will listen on `localhost:8815`.
-
----
-
-## 2. List Flights
-
-```bash
-npx ts-node list-flights.ts
-```
-
----
-
-## 3. Fetch Arrow Table (DoGet)
-
-```bash
-npx ts-node get-table.ts
-```
-
----
-
-## 4. Upload Arrow Table (DoPut)
-
-```bash
-npx ts-node put-table.ts
-```
-
----
-
-## 5. DuckDB Flight Example
-
-```bash
-cd duckdb
-docker compose up
-npx ts-node get-table.ts
-```
+`Handshake` and `DoExchange` do not yet have high-level examples. They remain
+available through `FlightClient.raw` and `arrow-flight-client/raw`, where the
+caller owns generated messages and IPC framing.

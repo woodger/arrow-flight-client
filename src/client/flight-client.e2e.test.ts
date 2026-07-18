@@ -1,101 +1,116 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
+import { describe, test } from 'node:test';
+import assert from 'node:assert/strict';
+import { Message, tableFromArrays, util } from 'apache-arrow';
 import { FlightClient } from './flight-client';
-import { FlightDescriptor_DescriptorType, FlightDescriptor, FlightData } from '../generated/Flight';
+import type { FlightGrpcClient } from './flight-client';
+import type { CallOptions } from 'nice-grpc';
+import { encodeFlightData } from './ipc';
+import { encodeDescriptor } from './protocol';
+import { pathDescriptor } from './types';
+import type { FlightData } from '../generated/Flight';
 
-class MockStream {
-  private messages: any[];
-  
-  constructor(messages: any[] = []) {
-    this.messages = messages;
-  }
+describe('Flight client integration', () => {
+  test('downloads FlightData as an Arrow table', async () => {
+    const expected = tableFromArrays({ id: [1, 2], name: ['one', 'two'] });
+    const messages: FlightData[] = [];
 
-  async *[Symbol.asyncIterator]() {
-    for (const msg of this.messages) {
-      yield msg;
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('example')),
+      expected
+    )) {
+      messages.push(message);
     }
-  }
 
-  async write(msg: any) {
-    this.messages.push(msg);
-  }
-
-  async end() {}
-}
-
-class MockGrpcClient {
-  doGetCalled: any[] = [];
-  doPutCalled: any[] = [];
-
-  doGet(request: any) {
-    this.doGetCalled.push(request);
-
-    return new MockStream([
-      {
-        dataBody: Buffer.from([1,2,3]),
-        dataHeader: Buffer.alloc(0),
-        appMetadata: Buffer.alloc(0)
+    const grpcClient = {
+      async *doGet() {
+        yield* messages;
       }
-    ]);
-  }
+    } as unknown as FlightGrpcClient;
+    const client = createClientWithRaw(grpcClient);
 
-  doPut() {
-    const stream = new MockStream();
-    this.doPutCalled.push(stream);
+    try {
+      const actual = await client.getTable(Buffer.from('ticket'));
 
-    return stream;
-  }
-}
-
-const createMockFlightClient = (metadata?: Record<string,string>) => 
-  new FlightClient('localhost:1234', { metadata }, new MockGrpcClient());
-
-
-describe('class FlightClient e2e (mock)', () => {
-  test('doGet returns FlightData stream', async () => {
-    const client = createMockFlightClient();
-    const ticket = {
-      ticket: Buffer.from('abc')
-    };
-
-    const stream = client.grpc.doGet(ticket);
-    const received: any[] = [];
-
-    for await (const msg of stream) {
-      received.push(msg);
+      assert.deepStrictEqual(actual.toArray(), expected.toArray());
+      assert.ok(util.compareSchemas(actual.schema, expected.schema));
     }
-
-    assert.strictEqual(received.length, 1);
-    assert.deepStrictEqual([...received[0].dataBody], [1,2,3]);
+    finally {
+      await client.close();
+    }
   });
 
-  test('doPut sends FlightData correctly', async () => {
-    const client = createMockFlightClient();
-    const stream = client.grpc.doPut();
+  test('uploads a schema and record batches with the descriptor only first', async () => {
+    const table = tableFromArrays({ id: [1, 2] });
+    const received: FlightData[] = [];
+    const grpcClient = {
+      async *doPut(request: AsyncIterable<FlightData>) {
+        for await (const message of request) {
+          received.push(message);
+        }
 
-    const descriptor: FlightDescriptor = {
-      type: FlightDescriptor_DescriptorType.PATH,
-      path: ['test'],
-      cmd: Buffer.alloc(0)
-    };
+        yield { appMetadata: Buffer.from('committed') };
+      }
+    } as unknown as FlightGrpcClient;
+    const client = createClientWithRaw(grpcClient);
 
-    const data: FlightData = {
-      flightDescriptor: descriptor,
-      dataHeader: Buffer.alloc(0),
-      dataBody: Buffer.from([9,8,7]),
-      appMetadata: Buffer.alloc(0)
-    };
+    try {
+      const results = await client.putTable(pathDescriptor('example'), table);
 
-    await stream.write(data);
-    await stream.end();
-
-    // Проверяем что данные дошли в mock stream
-    assert.strictEqual(stream['messages'].length, 1);
-    assert.deepStrictEqual([...stream['messages'][0].dataBody], [9,8,7]);
+      assert.ok(received.length >= 2);
+      assert.deepStrictEqual(received[0]?.flightDescriptor?.path, ['example']);
+      assert.ok(received.slice(1).every(({ flightDescriptor }) => !flightDescriptor));
+      assert.ok(Message.decode(received[0]?.dataHeader ?? []).isSchema());
+      assert.ok(received.some(({ dataHeader }) => (
+        Message.decode(dataHeader).isRecordBatch()
+      )));
+      assert.deepStrictEqual(
+        results.map(({ appMetadata }) => Buffer.from(appMetadata).toString()),
+        ['committed']
+      );
+    }
+    finally {
+      await client.close();
+    }
   });
 
-  test('metadata is passed through middleware', async () => {
-    const client = createMockFlightClient({ authorization: 'Bearer token' });
-    assert(client.grpc, 'grpc client exists');
+  test('forwards call metadata and deadline cancellation', async () => {
+    let receivedOptions: CallOptions | undefined;
+    const grpcClient = {
+      async *listActions(_request: unknown, options?: CallOptions) {
+        receivedOptions = options;
+        yield { type: 'cancel', description: 'Cancel work' };
+      }
+    } as unknown as FlightGrpcClient;
+    const client = createClientWithRaw(grpcClient);
+
+    try {
+      const actions = [];
+
+      for await (const action of client.listActions({
+        deadline: new Date(Date.now() + 10_000),
+        metadata: { 'x-request-id': 'request-1' }
+      })) {
+        actions.push(action);
+      }
+
+      assert.deepStrictEqual(actions, [
+        { type: 'cancel', description: 'Cancel work' }
+      ]);
+      assert.strictEqual(
+        receivedOptions?.metadata?.get('x-request-id'),
+        'request-1'
+      );
+      assert.ok(receivedOptions?.signal);
+    }
+    finally {
+      await client.close();
+    }
   });
 });
+
+function createClientWithRaw(grpcClient: FlightGrpcClient): FlightClient {
+  const client = new FlightClient('localhost:1234');
+
+  Object.defineProperty(client, 'client', { value: grpcClient });
+  return client;
+}

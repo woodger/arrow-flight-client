@@ -1,1 +1,6 @@
-examples
+node_modules/
+yarn.lock
+src/
+tsconfig.json
+eslint.config.mjs
+**/*.test.*

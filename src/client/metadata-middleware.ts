@@ -1,37 +1,38 @@
-import { ClientMiddleware, CallOptions } from 'nice-grpc';
-import { Metadata } from 'nice-grpc-common';
-
 /**
- * middleware для передачи metadata (например, авторизации) на каждый gRPC вызов.
+ * Client metadata middleware owns outgoing metadata composition.
  *
- * Используется при создании FlightClient для добавления токена Bearer или других заголовков.
+ * Allowed here:
+ * - translating configured headers into nice-grpc metadata;
+ * - preserving repeated values;
+ * - applying per-call values as overrides for matching configured keys.
  *
- * @param metadataMap - объект ключ-значение для metadata
- * @returns ClientMiddleware — middleware для nice-grpc
- *
- * Пример:
- * ```ts
- * const middleware = metadataMiddleware({ authorization: 'Bearer TOKEN' });
- * const client = new FlightClient('localhost:8815', { clientMiddleware: [middleware] });
- * ```
+ * This file must not implement authentication flows or own channel lifecycle.
  */
-export function metadataMiddleware(headers: Record<string, string | string[]>): ClientMiddleware {
+
+import type { ClientMiddleware, CallOptions } from 'nice-grpc';
+import { Metadata } from 'nice-grpc-common';
+import type { FlightMetadata } from './types';
+
+export function metadataMiddleware(headers: FlightMetadata): ClientMiddleware {
   return async function* (call, options: CallOptions) {
-    // Создаём объект Metadata для nice-grpc
     const metadata = new Metadata();
 
     for (const [key, value] of Object.entries(headers)) {
-      if (Array.isArray(value)) {
-        for (const item of value) {
-          metadata.append(key, item);
-        }
-      }
-      else {
-        metadata.set(key, value);
+      const values = Array.isArray(value) ? [...value] : [value];
+
+      for (const item of values) {
+        metadata.append(key, item);
       }
     }
 
-    // Передаём вызов дальше
+    for (const [key, values] of options.metadata ?? []) {
+      metadata.delete(key);
+
+      for (const value of values) {
+        metadata.append(key, value);
+      }
+    }
+
     return yield* call.next(call.request, {
       ...options,
       metadata

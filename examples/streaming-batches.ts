@@ -1,29 +1,32 @@
-import { FlightClient, listFlights } from '../src';
-import { RecordBatchReader } from 'apache-arrow';
+import { FlightClient } from '../src';
 
 async function main() {
   const client = new FlightClient('localhost:8815');
-  const flights = await listFlights(client);
 
-  const ticket = flights[0].endpoint![0].ticket!.ticket!;
-  const stream = client.grpc.doGet({ ticket });
-  const chunks: Uint8Array[] = [];
+  try {
+    for await (const flight of client.listFlights()) {
+      const ticket = flight.endpoints[0]?.ticket;
 
-  for await (const data of stream) {
-    if (data.dataBody) {
-      chunks.push(data.dataBody);
+      if (!ticket) {
+        continue;
+      }
+
+      const reader = await client.doGet(ticket);
+
+      for await (const chunk of reader) {
+        if (chunk.data) {
+          console.log('Batch rows:', chunk.data.numRows);
+        }
+      }
+
+      return;
     }
+
+    throw new Error('No Flight endpoint with a ticket was found');
   }
-
-  const reader = await RecordBatchReader.from(
-    Buffer.concat(chunks)
-  );
-
-  for await (const batch of reader) {
-    console.log('Batch rows:', batch.numRows);
+  finally {
+    await client.close();
   }
-
-  await client.close();
 }
 
 main().catch(console.error);

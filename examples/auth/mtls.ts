@@ -1,27 +1,23 @@
-import fs from 'fs';
-import { credentials } from '@grpc/grpc-js';
-import { createChannel, createClient } from 'nice-grpc';
-import { FlightServiceDefinition } from '../../src/generated/Flight';
+import fs from 'node:fs';
+import { FlightClient } from '../../src';
 
 async function main() {
-  const rootCert = fs.readFileSync('./certs/ca.pem');
-  const key = fs.readFileSync('./certs/client.key');
-  const cert = fs.readFileSync('./certs/client.pem');
+  const client = new FlightClient('localhost:8815', {
+    tls: {
+      rootCertificates: fs.readFileSync('./certs/ca.pem'),
+      privateKey: fs.readFileSync('./certs/client.key'),
+      certificateChain: fs.readFileSync('./certs/client.pem')
+    }
+  });
 
-  const channel = createChannel(
-    'localhost:8815',
-    credentials.createSsl(rootCert, key, cert)
-  );
-
-  const client = createClient(FlightServiceDefinition, channel);
-  const flights = [];
-
-  for await (const item of client.listFlights({})) {
-    flights.push(item);
+  try {
+    for await (const flight of client.listFlights()) {
+      console.log(flight);
+    }
   }
-
-  console.log(flights);
-  await channel.close();
+  finally {
+    await client.close();
+  }
 }
 
 main().catch(console.error);
