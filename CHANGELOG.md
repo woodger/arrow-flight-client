@@ -7,10 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-These changes are planned for the `0.0.7` release.
+## [0.0.7] - 2026-07-18
 
 ### Added
 
+- Added a streaming high-level `FlightClient` API for discovery, schemas,
+  polling, `DoGet`, `DoPut`, and actions.
+- Added project-owned descriptors, Flight response types, and descriptor
+  builders that do not require generated protobuf values.
+- Added `FlightStreamReader` to preserve record batch and application metadata
+  ordering without buffering the complete response.
+- Added per-call metadata, cancellation, deadlines, custom TLS roots, and mTLS
+  client identity support.
+- Added the `arrow-flight-client/raw` package entrypoint for generated protobuf
+  messages and the low-level service definition.
 - Added explicit runtime dependencies for protobuf wire support and direct
   gRPC imports.
 - Added ESLint with TypeScript support and a project lint command.
@@ -22,6 +32,9 @@ These changes are planned for the `0.0.7` release.
 
 ### Changed
 
+- Made Flight response streams `AsyncIterable` by default and kept collection
+  explicit through `getTable()` and `putTable()`.
+- Exposed the generated client as `FlightClient.raw`.
 - Lowered the package runtime requirement from Node.js `>=18.0.0` to
   `>=16.9.0` while requiring Node.js `>=20.19.0` for repository development.
 - Enabled strict TypeScript checks, Node.js module resolution, and direct
@@ -35,8 +48,16 @@ These changes are planned for the `0.0.7` release.
 - Updated npm publication contents to include development policies while
   excluding source files, tests, and local tooling.
 
+### Deprecated
+
+- Deprecated `FlightClient.grpc` in favor of the explicit `FlightClient.raw`
+  low-level escape hatch.
+
 ### Removed
 
+- Removed the non-functional high-level `DoExchange` example; `DoExchange`
+  remains available through the raw client until its streaming contract is
+  implemented.
 - Removed the direct `ts-proto` development dependency.
 - Removed stale lowercase duplicates of generated Flight build artifacts.
 - Removed tracked build output from the legacy `dist/src` and `dist/examples`
@@ -44,10 +65,16 @@ These changes are planned for the `0.0.7` release.
 
 ### Fixed
 
+- Split outgoing Arrow IPC metadata and body buffers into protocol-correct
+  `FlightData` messages and attached the `DoPut` descriptor only to the first
+  message.
+- Reconstructed encapsulated Arrow IPC framing for `DoGet`, including schema,
+  dictionary, record batch, and application metadata handling.
+- Preserved server `PutResult.app_metadata` instead of discarding responses.
 - Updated `DoPut` to use the async-iterable bidirectional streaming contract
   provided by `nice-grpc`.
-- Allowed `FlightClient.close()` to safely handle an injected client that does
-  not own a gRPC channel.
+- Made `FlightClient.close()` idempotent and rejected new high-level calls
+  after closure.
 
 ## [0.0.6] - 2026-01-02
 
@@ -66,6 +93,7 @@ These changes are planned for the `0.0.7` release.
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/70c990a8066f504a590204416e4cc580c1ca6c15...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.7...HEAD
+[0.0.7]: https://github.com/woodger/arrow-flight-client/compare/70c990a8066f504a590204416e4cc580c1ca6c15...v0.0.7
 [0.0.6]: https://github.com/woodger/arrow-flight-client/compare/8e5e3c2747716b92adaa4a49d0d789923b9557c7...70c990a8066f504a590204416e4cc580c1ca6c15
 [0.0.5]: https://github.com/woodger/arrow-flight-client/tree/8e5e3c2747716b92adaa4a49d0d789923b9557c7

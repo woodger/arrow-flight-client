@@ -1,33 +1,27 @@
 import { describe, test } from 'node:test';
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import { tableFromArrays } from 'apache-arrow';
 import { doPutTable } from './do-put';
-import { FlightClient } from './flight-client';
-import type { FlightGrpcClient } from './flight-client';
-import type { FlightData } from '../generated/Flight';
+import type { FlightClient } from './flight-client';
+import type { FlightDescriptor } from './types';
 
 describe('doPutTable', () => {
-  test('sends the table through the request stream', async () => {
-    const received: FlightData[] = [];
-    const grpcClient = {
-      async *doPut(request: AsyncIterable<FlightData>) {
-        for await (const message of request) {
-          received.push(message);
-        }
-
-        yield { appMetadata: Buffer.alloc(0) };
-      }
-    } as unknown as FlightGrpcClient;
-    const client = new FlightClient('unused', {}, grpcClient);
+  test('delegates to the table upload API with a path descriptor', async () => {
     const table = tableFromArrays({ id: [1, 2] });
+    let receivedDescriptor: FlightDescriptor | undefined;
+
+    const client = {
+      async putTable(descriptor: FlightDescriptor) {
+        receivedDescriptor = descriptor;
+        return [];
+      }
+    } as unknown as FlightClient;
 
     await doPutTable(client, table, ['example']);
 
-    assert.strictEqual(received.length, 1);
-    const [message] = received;
-    assert.ok(message);
-    assert.ok(message.flightDescriptor);
-    assert.deepStrictEqual(message.flightDescriptor.path, ['example']);
-    assert.ok(message.dataBody.byteLength > 0);
+    assert.deepStrictEqual(receivedDescriptor, {
+      type: 'path',
+      path: ['example']
+    });
   });
 });

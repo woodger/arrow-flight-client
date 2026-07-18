@@ -191,7 +191,7 @@ Nested `describe()` names a public member or operation:
 
 - `constructor` for constructor behavior;
 - `#close` for `client.close()`;
-- `#grpc` for the `client.grpc` accessor;
+- `#raw` for the `client.raw` accessor;
 - the function name for standalone functions grouped under a module-level suite.
 
 Example:
