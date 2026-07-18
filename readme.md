@@ -1,7 +1,9 @@
 # Apache Arrow Flight Client for Node.js
 
-[![License](https://img.shields.io/npm/l/arrow-flight-client.svg)](https://github.com/woodger/arrow-flight-client/blob/main/LICENSE)
-[![npm](https://img.shields.io/npm/v/arrow-flight-client.svg)](https://www.npmjs.com/package/arrow-flight-client)
+[![npm version](https://img.shields.io/npm/v/arrow-flight-client.svg)](https://www.npmjs.com/package/arrow-flight-client)
+[![node](https://img.shields.io/node/v/arrow-flight-client.svg)](https://www.npmjs.com/package/arrow-flight-client)
+[![types](https://img.shields.io/npm/types/arrow-flight-client.svg)](https://www.npmjs.com/package/arrow-flight-client)
+[![license](https://img.shields.io/npm/l/arrow-flight-client.svg)](LICENSE)
 
 > Experimental: the public API may change before `1.0.0`.
 
@@ -177,14 +179,11 @@ must not be edited manually. Development and review rules are documented in the
 [project policies](./docs/policy/index.md), and release history is maintained in
 the [changelog](./CHANGELOG.md).
 
-## License
+## Disclaimer
 
-[MIT](./LICENSE)
+This project is an independent implementation and is not affiliated with the
+Apache Software Foundation or its affiliates. Product and company names are
+used solely to indicate compatibility with public APIs.
 
-## Дисклеймер
-
-Проект является независимой реализацией и не имеет никакого отношения к
-Apache или их аффилированным лицам. Названия продуктов и компаний
-используются только для обозначения совместимости с публичным API.
-
-Сведения о сторонних контрактах и generated-коде включены в [LICENSE](LICENSE).
+Information about third-party contracts and generated code is included in
+[LICENSE](LICENSE).
