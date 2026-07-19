@@ -24,12 +24,12 @@ Navigation documents must help find the source of truth, not become a second REA
 ## Project Sources Of Truth
 
 - package metadata, supported Node.js version, dependencies, entrypoints, and scripts: [`package.json`](../../package.json);
-- public package surfaces:
-  [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/index.ts)
+- public package surface and curated low-level protocol namespace:
+  [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/develop/src/index.ts)
   and
-  [`src/raw.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/raw.ts);
+  [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/develop/src/flight-protocol.ts);
 - client behavior:
-  [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.9/src/client);
+  [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/develop/src/client);
 - Flight wire contract: [`contracts/Flight.proto`](../../contracts/Flight.proto);
 - generated TypeScript bindings:
   [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/generated/Flight.ts);

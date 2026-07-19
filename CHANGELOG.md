@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a curated `flightProtocol` namespace at the package root for selected
+  Flight protobuf messages, codecs, enums, the service definition, and the
+  explicit low-level client types and transport metadata constructor.
+
+### Changed
+
+- Replaced the generated `FlightGrpcClient` alias with the explicit ten-method
+  `flightProtocol.FlightRawClient` contract and curated names for nested
+  protocol types.
+
+### Removed
+
+- Removed the `arrow-flight-client/raw` package subpath. Import low-level
+  protocol contracts from the root `flightProtocol` namespace instead.
+
 ## [0.0.9] - 2026-07-18
 
 ### Changed

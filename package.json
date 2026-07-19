@@ -32,11 +32,6 @@
       "require": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./raw": {
-      "types": "./dist/raw.d.ts",
-      "require": "./dist/raw.js",
-      "default": "./dist/raw.js"
-    },
     "./package.json": "./package.json"
   },
   "scripts": {

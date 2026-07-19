@@ -16,13 +16,13 @@ import {
   createClientFactory,
   Status,
   type Channel,
-  type ChannelOptions,
-  type Client
+  type ChannelOptions
 } from 'nice-grpc';
 import type { CallOptions } from 'nice-grpc';
 import { Metadata } from 'nice-grpc-common';
 import type { Schema, Table } from 'apache-arrow';
 import { FlightServiceDefinition } from '../generated/Flight';
+import type { FlightRawClient } from '../flight-protocol';
 import { createFlightStreamReader } from './flight-stream-reader';
 import type { FlightStreamReader } from './flight-stream-reader';
 import { encodeFlightData } from './ipc';
@@ -50,8 +50,6 @@ import type {
   FlightTicket
 } from './types';
 
-export type FlightGrpcClient = Client<typeof FlightServiceDefinition>;
-
 interface PreparedCall {
   readonly options: CallOptions
   readonly dispose: () => void
@@ -63,7 +61,7 @@ type FlightMethodName = keyof typeof FlightServiceDefinition.methods;
 
 export class FlightClient {
   private readonly channel: Channel;
-  private readonly client: FlightGrpcClient;
+  private readonly client: FlightRawClient;
   private closed = false;
   private closePromise: Promise<void> | undefined;
 
@@ -92,13 +90,13 @@ export class FlightClient {
     this.client = clientFactory.create(FlightServiceDefinition, this.channel);
   }
 
-  /** Low-level generated client for protocol extensions not covered by this facade. */
-  get raw(): FlightGrpcClient {
+  /** Escape hatch for unsupported operations on the client-owned channel. */
+  get raw(): FlightRawClient {
     return this.client;
   }
 
   /** @deprecated Use `raw` for explicit low-level access. */
-  get grpc(): FlightGrpcClient {
+  get grpc(): FlightRawClient {
     return this.raw;
   }
 
