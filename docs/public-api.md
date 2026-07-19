@@ -5,11 +5,11 @@
 
 The package entrypoint map is defined by [`package.json`](../package.json). The
 root source surface and its curated low-level protocol namespace are
-[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/develop/src/index.ts)
+[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/index.ts)
 and
-[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/develop/src/flight-protocol.ts).
+[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/flight-protocol.ts).
 Observable stream behavior is protected by tests colocated with
-[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/develop/src/client),
+[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.10/src/client),
 while the wire contract remains
 [`contracts/Flight.proto`](../contracts/Flight.proto).
 
@@ -59,9 +59,11 @@ Generated nested names use curated aliases:
 - `SetSessionOptionsResult_ErrorValue` becomes
   `flightProtocol.SetSessionOptionsErrorValue`.
 
-The former `FlightGrpcClient` type becomes
-`flightProtocol.FlightRawClient`. Generator helpers and server implementation
-types have no public replacement.
+The former `FlightGrpcClient` alias and generated `FlightServiceClient` type
+both become `flightProtocol.FlightRawClient`.
+`flightProtocol.FlightProtocolInput<T>` provides the recursive request shape
+accepted by that client and the curated codecs. Generator helpers and server
+implementation types have no public replacement.
 
 `apache-arrow@^21.1.0` is a required peer dependency. The application and
 client must resolve one runtime instance because Arrow tables, record batches,
