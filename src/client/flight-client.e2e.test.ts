@@ -4,7 +4,7 @@ import { Message, tableFromArrays, util } from 'apache-arrow';
 import { ClientError, createServer, Status } from 'nice-grpc';
 import type { CallContext } from 'nice-grpc';
 import { FlightClient } from './flight-client';
-import type { FlightGrpcClient } from './flight-client';
+import type { FlightRawClient } from '../flight-protocol';
 import type { CallOptions } from 'nice-grpc';
 import { encodeFlightData } from './ipc';
 import { encodeDescriptor } from './protocol';
@@ -31,7 +31,7 @@ describe('Flight client integration', () => {
       async *doGet() {
         yield* messages;
       }
-    } as unknown as FlightGrpcClient;
+    } as unknown as FlightRawClient;
     const client = createClientWithRaw(grpcClient);
 
     try {
@@ -56,7 +56,7 @@ describe('Flight client integration', () => {
 
         yield { appMetadata: Buffer.from('committed') };
       }
-    } as unknown as FlightGrpcClient;
+    } as unknown as FlightRawClient;
     const client = createClientWithRaw(grpcClient);
 
     try {
@@ -86,7 +86,7 @@ describe('Flight client integration', () => {
         receivedOptions = options;
         yield { type: 'cancel', description: 'Cancel work' };
       }
-    } as unknown as FlightGrpcClient;
+    } as unknown as FlightRawClient;
     const client = createClientWithRaw(grpcClient);
 
     try {
@@ -189,7 +189,7 @@ describe('Flight client integration', () => {
         started = true;
         yield { type: 'unexpected', description: '' };
       }
-    } as unknown as FlightGrpcClient;
+    } as unknown as FlightRawClient;
     const client = createClientWithRaw(grpcClient);
     const actions = client.listActions({ deadline: new Date(0) });
 
@@ -350,7 +350,7 @@ describe('Flight client integration', () => {
   });
 });
 
-function createClientWithRaw(grpcClient: FlightGrpcClient): FlightClient {
+function createClientWithRaw(grpcClient: FlightRawClient): FlightClient {
   const client = new FlightClient('localhost:1234');
 
   Object.defineProperty(client, 'client', { value: grpcClient });

@@ -3,6 +3,7 @@ yarn.lock
 .github/
 test/
 src/
+dist/raw.*
 tsconfig.json
 eslint.config.mjs
 **/*.test.*

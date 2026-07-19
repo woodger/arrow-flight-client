@@ -29,5 +29,6 @@ a local scenario. The repository build itself compiles only `src/`.
 - [`duckdb/get-table.ts`](./duckdb/get-table.ts) shows a server-specific ticket.
 
 `Handshake` and `DoExchange` do not yet have high-level examples. They remain
-available through `FlightClient.raw` and `arrow-flight-client/raw`, where the
-caller owns generated messages and IPC framing.
+available through `FlightClient.raw`, with their curated messages and codecs
+under the root `flightProtocol` namespace. The caller owns raw `DoExchange` IPC
+framing.

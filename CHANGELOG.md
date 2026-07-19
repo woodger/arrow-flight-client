@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.10] - 2026-07-19
+
+### Added
+
+- Added a curated `flightProtocol` namespace at the package root for selected
+  Flight protobuf messages, codecs, enums, the service definition, and the
+  explicit low-level client types and transport metadata constructor.
+
+### Changed
+
+- Replaced the generator-derived `FlightGrpcClient` alias and
+  `FlightServiceClient` type with the explicit ten-method
+  `flightProtocol.FlightRawClient` contract, and added curated names for nested
+  protocol types.
+
+### Removed
+
+- Removed the `arrow-flight-client/raw` package subpath. Import low-level
+  protocol contracts from the root `flightProtocol` namespace instead.
+
 ## [0.0.9] - 2026-07-18
 
 ### Changed
@@ -138,7 +158,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.9...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.10...HEAD
+[0.0.10]: https://github.com/woodger/arrow-flight-client/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/woodger/arrow-flight-client/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/woodger/arrow-flight-client/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/woodger/arrow-flight-client/compare/70c990a8066f504a590204416e4cc580c1ca6c15...v0.0.7

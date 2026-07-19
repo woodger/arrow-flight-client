@@ -151,7 +151,7 @@ caller-provided signal rejects with `AbortError`.
 
 ## Public API
 
-The package root is the stable high-level entrypoint. It includes:
+The package root keeps the stable high-level API flat. It includes:
 
 - `FlightClient` and call/client option types;
 - `pathDescriptor()` and `commandDescriptor()`;
@@ -163,10 +163,19 @@ The package root is the stable high-level entrypoint. It includes:
 The earlier standalone `listFlights`, `getFlightInfo`, `doGetTable`, and
 `doPutTable` functions remain available as compatibility helpers.
 
-Generated protobuf messages and the low-level service definition are available
-from `arrow-flight-client/raw`. The same generated client is exposed as
-`flightClient.raw`; the former `flightClient.grpc` name remains as a deprecated
-alias.
+Curated protobuf messages, codecs, enums, the service definition, and the
+low-level client types are grouped under the `flightProtocol` namespace at the
+package root. The low-level client is exposed as `flightClient.raw`; the former
+`flightClient.grpc` name remains as a deprecated alias.
+
+Existing low-level imports migrate to the namespace:
+
+```ts
+import { flightProtocol } from 'arrow-flight-client';
+
+const request = flightProtocol.Ticket.create({ ticket });
+type RawClient = flightProtocol.FlightRawClient;
+```
 
 The API boundaries and intentional limitations are described in the
 [public API design](./docs/public-api.md). More scenarios are available in the
@@ -174,7 +183,8 @@ The API boundaries and intentional limitations are described in the
 
 ## Current Limitations
 
-- `Handshake` and `DoExchange` currently require the raw API;
+- `Handshake` and `DoExchange` currently require `FlightClient.raw` and the
+  caller owns `DoExchange` Arrow IPC framing;
 - endpoint location routing is not automatic; `DoGet` uses the current client;
 - transport failures are currently exposed as `nice-grpc` errors;
 - The live interoperability suite currently targets PyArrow 24 on Linux, not
@@ -205,7 +215,7 @@ npm run test:pyarrow
 ```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).
-[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/generated/Flight.ts)
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/generated/Flight.ts)
 is generated code and must not be edited manually. Development and review
 rules are documented in the [project policies](./docs/policy/index.md), and
 release history is maintained in the [changelog](./CHANGELOG.md).

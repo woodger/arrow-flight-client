@@ -1,6 +1,6 @@
 {
   "name": "arrow-flight-client",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Apache Arrow Flight Client for Node.js",
   "keywords": [
     "apache-arrow",
@@ -31,11 +31,6 @@
       "types": "./dist/index.d.ts",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./raw": {
-      "types": "./dist/raw.d.ts",
-      "require": "./dist/raw.js",
-      "default": "./dist/raw.js"
     },
     "./package.json": "./package.json"
   },

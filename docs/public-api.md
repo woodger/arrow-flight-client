@@ -4,12 +4,12 @@
 > the Node.js Arrow Flight client.
 
 The package entrypoint map is defined by [`package.json`](../package.json). The
-root and raw source surfaces are
-[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/index.ts)
+root source surface and its curated low-level protocol namespace are
+[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/index.ts)
 and
-[`src/raw.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/raw.ts).
+[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/flight-protocol.ts).
 Observable stream behavior is protected by tests colocated with
-[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.9/src/client),
+[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.10/src/client),
 while the wire contract remains
 [`contracts/Flight.proto`](../contracts/Flight.proto).
 
@@ -20,10 +20,50 @@ objects, and Arrow JS objects. Generated protobuf requirements such as enum
 members, empty `Buffer` fields, `dataHeader`, and `dataBody` are not part of the
 high-level calling convention.
 
-Low-level protobuf and gRPC access is intentionally separated through the
-`arrow-flight-client/raw` package subpath and `FlightClient.raw`. This escape
-hatch is intended for Flight operations or application extensions that do not
-yet have a high-level wrapper.
+Low-level protobuf contracts are intentionally grouped under the
+`flightProtocol` namespace instead of being flattened into the high-level
+surface. The namespace exports an explicit set of Flight messages, codecs,
+enums, the service definition, and the project-owned `FlightRawClient` type;
+generator helpers and server implementation types remain internal.
+
+`FlightClient.raw` exposes that low-level client on the existing channel. This
+escape hatch is intended for Flight operations or application extensions that
+do not yet have a high-level wrapper.
+
+Raw calls intentionally retain transport-level semantics. Their
+`FlightRawCallOptions` accept `flightProtocol.RawMetadata`, cancellation, and
+header/trailer callbacks, but do not apply the facade's deadline normalization
+or closed-client guard. `FlightServiceDefinition` remains available for custom
+construction with a compatible direct `nice-grpc` dependency.
+
+## Low-Level Migration
+
+The former `arrow-flight-client/raw` named imports move under the root
+namespace:
+
+```ts
+import { flightProtocol } from 'arrow-flight-client';
+
+const message = flightProtocol.FlightData.create({ dataHeader, dataBody });
+type RawClient = flightProtocol.FlightRawClient;
+```
+
+Generated nested names use curated aliases:
+
+- `FlightDescriptor_DescriptorType` becomes `flightProtocol.FlightDescriptorType`;
+- `CloseSessionResult_Status` becomes `flightProtocol.CloseSessionStatus`;
+- `SessionOptionValue_StringListValue` becomes
+  `flightProtocol.SessionOptionStringListValue`;
+- `SetSessionOptionsResult_Error` becomes
+  `flightProtocol.SetSessionOptionsError`;
+- `SetSessionOptionsResult_ErrorValue` becomes
+  `flightProtocol.SetSessionOptionsErrorValue`.
+
+The former `FlightGrpcClient` alias and generated `FlightServiceClient` type
+both become `flightProtocol.FlightRawClient`.
+`flightProtocol.FlightProtocolInput<T>` provides the recursive request shape
+accepted by that client and the curated codecs. Generator helpers and server
+implementation types have no public replacement.
 
 `apache-arrow@^21.1.0` is a required peer dependency. The application and
 client must resolve one runtime instance because Arrow tables, record batches,
@@ -62,10 +102,10 @@ oversized `RecordBatch` automatically.
 
 `FlightClient` owns one gRPC channel. `close()` is idempotent, and new
 high-level calls are rejected after closure. Client metadata applies to every
-call; per-call metadata replaces matching configured keys. Calls support an
-`AbortSignal` and an absolute `Date` deadline. Caller cancellation rejects with
-`AbortError`; deadline expiry rejects with a nice-grpc `ClientError` whose code
-is `DEADLINE_EXCEEDED`.
+call; per-call metadata replaces matching configured keys. High-level calls
+support an `AbortSignal` and an absolute `Date` deadline. Caller cancellation
+rejects with `AbortError`; high-level deadline expiry rejects with a nice-grpc
+`ClientError` whose code is `DEADLINE_EXCEEDED`.
 
 TLS uses platform roots by default and accepts custom roots plus an optional
 mutual-TLS identity. A private key and certificate chain form one identity and
@@ -80,6 +120,7 @@ multiple bounded record batches with transport-envelope headroom.
 
 The high-level API covers discovery, `GetFlightInfo`, `PollFlightInfo`,
 `GetSchema`, `DoGet`, `DoPut`, and actions. Handshake flows and `DoExchange`
-require the raw API, and automatic endpoint location routing is not implemented.
-Transport failures remain nice-grpc errors; deadline expiry is explicitly
-reported with the `DEADLINE_EXCEEDED` status.
+require `FlightClient.raw`; callers of raw `DoExchange` also own Arrow IPC
+framing. Automatic endpoint location routing is not implemented. Transport
+failures remain nice-grpc errors; deadline expiry is explicitly reported with
+the `DEADLINE_EXCEEDED` status for high-level calls.

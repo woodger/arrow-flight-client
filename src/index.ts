@@ -1,4 +1,5 @@
 export { FlightClient } from './client/flight-client';
+export * as flightProtocol from './flight-protocol';
 export type { FlightStreamReader } from './client/flight-stream-reader';
 export { FlightProtocolError } from './client/ipc';
 export {

@@ -24,19 +24,19 @@ Navigation documents must help find the source of truth, not become a second REA
 ## Project Sources Of Truth
 
 - package metadata, supported Node.js version, dependencies, entrypoints, and scripts: [`package.json`](../../package.json);
-- public package surfaces:
-  [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/index.ts)
+- public package surface and curated low-level protocol namespace:
+  [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/index.ts)
   and
-  [`src/raw.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/raw.ts);
+  [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/flight-protocol.ts);
 - client behavior:
-  [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.9/src/client);
+  [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.10/src/client);
 - Flight wire contract: [`contracts/Flight.proto`](../../contracts/Flight.proto);
 - generated TypeScript bindings:
-  [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/src/generated/Flight.ts);
+  [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/generated/Flight.ts);
 - compiler settings:
-  [`tsconfig.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/tsconfig.json);
+  [`tsconfig.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/tsconfig.json);
 - lint configuration:
-  [`eslint.config.mjs`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/eslint.config.mjs);
+  [`eslint.config.mjs`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/eslint.config.mjs);
 - observable behavior: tests colocated with source files under `src/`.
 
 `src/generated/Flight.ts` reflects the protobuf generator output. It is a derived artifact, not a place for manual contract edits. Protocol changes start in `contracts/Flight.proto` and must use the repository's approved generation workflow.

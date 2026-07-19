@@ -37,7 +37,7 @@ The published client supports the Node.js range declared in `package.json`. Repo
 
 The live PyArrow compatibility suite is deliberately separate from the unit-test
 command. It requires the pinned dependency in
-[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/v0.0.9/test/pyarrow/requirements.txt)
+[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/test/pyarrow/requirements.txt)
 and runs after compilation with:
 
 ```sh
