@@ -180,7 +180,7 @@ type RawClient = flightProtocol.FlightRawClient;
 
 The API boundaries and intentional limitations are described in the
 [public API design](./docs/public-api.md). More scenarios are available in the
-[examples](./examples/readme.md).
+[examples](./docs/examples/index.md).
 
 ## Current Limitations
 

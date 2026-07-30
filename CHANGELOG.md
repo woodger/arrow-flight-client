@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded the development compiler to TypeScript 7.0.2 and Fwa to 2.1.0,
   removing the test runner's dependency on the compiler API.
 - Simplified the package export map to expose only the root entrypoint.
+- Moved the TypeScript examples into copyable Markdown guides that import the
+  published package.
 
 ## [0.0.10] - 2026-07-19
 
