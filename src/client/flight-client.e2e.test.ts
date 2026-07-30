@@ -186,6 +186,35 @@ describe('Flight client integration', () => {
     }
   });
 
+  test('keeps a far-future deadline active', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *listActions() {
+        yield { type: 'available', description: '' };
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      const actions = [];
+
+      for await (const action of client.listActions({
+        deadline: new Date(Date.now() + 3_000_000_000)
+      })) {
+        actions.push(action);
+      }
+
+      assert.deepStrictEqual(actions, [
+        { type: 'available', description: '' }
+      ]);
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
   test('rejects a streaming call whose deadline passed before iteration', async () => {
     let started = false;
     const server = createServer();
@@ -274,6 +303,42 @@ describe('Flight client integration', () => {
 
       assert.deepStrictEqual(actions, [
         { type: 'Bearer configured', description: '' }
+      ]);
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('removes configured metadata with an empty per-call value', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *listActions(_request, context: CallContext) {
+        const authorization = context.metadata.get('authorization');
+
+        yield {
+          type: authorization === undefined ? 'absent' : 'present',
+          description: ''
+        };
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`, {
+      metadata: { authorization: 'Bearer configured' }
+    });
+
+    try {
+      const actions = [];
+
+      for await (const action of client.listActions({
+        metadata: { authorization: [] }
+      })) {
+        actions.push(action);
+      }
+
+      assert.deepStrictEqual(actions, [
+        { type: 'absent', description: '' }
       ]);
     }
     finally {

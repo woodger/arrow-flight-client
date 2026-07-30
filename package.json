@@ -36,6 +36,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "generate:proto": "grpc_tools_node_protoc --proto_path=contracts --ts_proto_out=src/generated --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,env=node,esModuleInterop=true contracts/Flight.proto",
     "prepack": "tsc",
     "test": "fwa --prune",
     "test:pyarrow": "node --test dist/client/flight-client.pyarrow.e2e.js",
@@ -57,7 +58,8 @@
     "eslint": "^9.39.4",
     "fwa": "^2.0.6",
     "globals": "^17.7.0",
-    "grpc-tools": "^1.13.1",
+    "grpc-tools": "1.13.1",
+    "ts-proto": "2.10.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.0"
   }

@@ -39,7 +39,9 @@ Navigation documents must help find the source of truth, not become a second REA
   [`eslint.config.mjs`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/eslint.config.mjs);
 - observable behavior: tests colocated with source files under `src/`.
 
-`src/generated/Flight.ts` reflects the protobuf generator output. It is a derived artifact, not a place for manual contract edits. Protocol changes start in `contracts/Flight.proto` and must use the repository's approved generation workflow.
+`src/generated/Flight.ts` reflects the protobuf generator output. It is a
+derived artifact, not a place for manual contract edits. Protocol changes start
+in `contracts/Flight.proto` and use `npm run generate:proto`.
 
 Examples demonstrate intended usage but do not override the public exports, types, or tested behavior.
 

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Streamed `Table` uploads one record batch at a time and delivered metadata-only
+  response messages without buffering them until the next Arrow batch.
+- Kept long-range deadlines within Node.js timer limits and released prepared
+  call resources when the client closes.
+- Allowed an empty per-call metadata array to remove a configured metadata key.
+
+### Changed
+
+- Restored the project-local protobuf generation command with a pinned generator
+  toolchain.
+
 ## [0.0.10] - 2026-07-19
 
 ### Added

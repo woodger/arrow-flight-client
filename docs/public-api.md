@@ -102,7 +102,8 @@ oversized `RecordBatch` automatically.
 
 `FlightClient` owns one gRPC channel. `close()` is idempotent, and new
 high-level calls are rejected after closure. Client metadata applies to every
-call; per-call metadata replaces matching configured keys. High-level calls
+call; per-call metadata replaces matching configured keys, and an empty value
+array removes a configured key for that call. High-level calls
 support an `AbortSignal` and an absolute `Date` deadline. Caller cancellation
 rejects with `AbortError`; high-level deadline expiry rejects with a nice-grpc
 `ClientError` whose code is `DEADLINE_EXCEEDED`.

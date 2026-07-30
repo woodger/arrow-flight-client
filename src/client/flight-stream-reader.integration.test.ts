@@ -44,6 +44,81 @@ describe('Flight stream reader integration', () => {
     assert.strictEqual(Buffer.from(chunks[1]?.appMetadata ?? []).toString(), 'trailing');
   });
 
+  test('yields metadata while the next record batch is pending', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('example')),
+      table
+    )) {
+      messages.push(message);
+    }
+
+    const schema = messages.find(({ dataHeader }) => (
+      Message.decode(dataHeader).isSchema()
+    ));
+    const batch = messages.find(({ dataHeader }) => (
+      Message.decode(dataHeader).isRecordBatch()
+    ));
+
+    assert.ok(schema);
+    assert.ok(batch);
+
+    let releaseBatch: (() => void) | undefined;
+    let markBatchPending: (() => void) | undefined;
+    const batchReleased = new Promise<void>((resolve) => {
+      releaseBatch = resolve;
+    });
+    const batchPending = new Promise<void>((resolve) => {
+      markBatchPending = resolve;
+    });
+    const source = async function* (): AsyncIterable<FlightData> {
+      yield schema;
+      yield {
+        flightDescriptor: undefined,
+        dataHeader: Buffer.alloc(0),
+        dataBody: Buffer.alloc(0),
+        appMetadata: Buffer.from('before-batch')
+      };
+      markBatchPending?.();
+      await batchReleased;
+      yield batch;
+    };
+    const reader = await createFlightStreamReader(source(), () => undefined);
+    const iterator = reader[Symbol.asyncIterator]();
+    const metadataChunk = iterator.next();
+    await batchPending;
+    const blocked = Symbol('blocked');
+    const firstResult = await Promise.race([
+      metadataChunk,
+      new Promise<typeof blocked>((resolve) => {
+        setImmediate(() => resolve(blocked));
+      })
+    ]);
+
+    releaseBatch?.();
+
+    try {
+      assert.notStrictEqual(firstResult, blocked);
+      assert.notStrictEqual(firstResult, undefined);
+
+      if (firstResult !== blocked) {
+        assert.strictEqual(firstResult.done, false);
+        assert.strictEqual(firstResult.value?.data, null);
+        assert.strictEqual(
+          Buffer.from(firstResult.value?.appMetadata ?? []).toString(),
+          'before-batch'
+        );
+      }
+    }
+    finally {
+      await metadataChunk;
+      await iterator.next();
+      await iterator.next();
+    }
+  });
+
   test('finishes after the response stream is consumed', async () => {
     const table = tableFromArrays({ id: [1] });
     const messages: FlightData[] = [];
@@ -65,6 +140,38 @@ describe('Flight stream reader integration', () => {
       void chunk;
     }
 
+    assert.strictEqual(finished, true);
+  });
+
+  test('cancels before response iteration starts', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('example')),
+      table
+    )) {
+      messages.push(message);
+    }
+
+    let sourceCancelled = false;
+    let finished = false;
+    const source = async function* (): AsyncIterable<FlightData> {
+      try {
+        yield* messages;
+      }
+      finally {
+        sourceCancelled = true;
+      }
+    };
+    const reader = await createFlightStreamReader(
+      source(),
+      () => { finished = true; }
+    );
+
+    await reader.cancel();
+
+    assert.strictEqual(sourceCancelled, true);
     assert.strictEqual(finished, true);
   });
 });

@@ -1,5 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { getEventListeners } from 'node:events';
 import { FlightClient } from './flight-client';
 
 describe('FlightClient', () => {
@@ -48,6 +49,26 @@ describe('FlightClient', () => {
 
       await client.close();
       assert.throws(() => client.listActions(), /closed/);
+    });
+
+    test('releases resources for a prepared streaming call', async () => {
+      const client = new FlightClient('localhost:1234');
+      const controller = new AbortController();
+      const actions = client.listActions({
+        signal: controller.signal,
+        deadline: new Date(Date.now() + 3_000_000_000)
+      });
+
+      assert.strictEqual(
+        getEventListeners(controller.signal, 'abort').length,
+        1
+      );
+      await client.close();
+      assert.strictEqual(
+        getEventListeners(controller.signal, 'abort').length,
+        0
+      );
+      void actions;
     });
   });
 });

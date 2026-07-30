@@ -26,7 +26,10 @@ import type { FlightRawClient } from '../flight-protocol';
 import { createFlightStreamReader } from './flight-stream-reader';
 import type { FlightStreamReader } from './flight-stream-reader';
 import { encodeFlightData } from './ipc';
-import { metadataMiddleware } from './metadata-middleware';
+import {
+  metadataMiddleware,
+  setMetadataOverrideKeys
+} from './metadata-middleware';
 import {
   decodeFlightInfo,
   decodePollInfo,
@@ -62,6 +65,7 @@ type FlightMethodName = keyof typeof FlightServiceDefinition.methods;
 export class FlightClient {
   private readonly channel: Channel;
   private readonly client: FlightRawClient;
+  private readonly callDisposers = new Set<() => void>();
   private closed = false;
   private closePromise: Promise<void> | undefined;
 
@@ -105,7 +109,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightInfo> {
     this.assertOpen();
-    const call = prepareCall(options, 'listFlights');
+    const call = this.prepareCall(options, 'listFlights');
 
     try {
       return mapStream(
@@ -132,7 +136,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): Promise<FlightInfo> {
     this.assertOpen();
-    const call = prepareCall(options, 'getFlightInfo');
+    const call = this.prepareCall(options, 'getFlightInfo');
 
     try {
       return decodeFlightInfo(
@@ -155,7 +159,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): Promise<FlightPollInfo> {
     this.assertOpen();
-    const call = prepareCall(options, 'pollFlightInfo');
+    const call = this.prepareCall(options, 'pollFlightInfo');
 
     try {
       return decodePollInfo(
@@ -178,7 +182,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): Promise<Schema> {
     this.assertOpen();
-    const call = prepareCall(options, 'getSchema');
+    const call = this.prepareCall(options, 'getSchema');
 
     try {
       const result = await this.client.getSchema(
@@ -200,7 +204,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): Promise<FlightStreamReader> {
     this.assertOpen();
-    const call = prepareCall(options, 'doGet');
+    const call = this.prepareCall(options, 'doGet');
 
     try {
       return await createFlightStreamReader(
@@ -235,7 +239,7 @@ export class FlightClient {
     options: FlightPutOptions = {}
   ): AsyncIterable<FlightPutResult> {
     this.assertOpen();
-    const call = prepareCall(options, 'doPut');
+    const call = this.prepareCall(options, 'doPut');
     const requests = encodeFlightData(
       encodeDescriptor(descriptor),
       source,
@@ -281,7 +285,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightActionResult> {
     this.assertOpen();
-    const call = prepareCall(options, 'doAction');
+    const call = this.prepareCall(options, 'doAction');
 
     try {
       return mapStream(
@@ -304,7 +308,7 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightActionType> {
     this.assertOpen();
-    const call = prepareCall(options, 'listActions');
+    const call = this.prepareCall(options, 'listActions');
 
     try {
       return mapStream(
@@ -326,6 +330,11 @@ export class FlightClient {
   close(): Promise<void> {
     if (!this.closePromise) {
       this.closed = true;
+
+      for (const dispose of [...this.callDisposers]) {
+        dispose();
+      }
+
       this.closePromise = Promise.resolve().then(() => this.channel.close());
     }
 
@@ -336,6 +345,37 @@ export class FlightClient {
     if (this.closed) {
       throw new Error('FlightClient is closed');
     }
+  }
+
+  private prepareCall(
+    options: FlightCallOptions,
+    methodName: FlightMethodName
+  ): PreparedCall {
+    const prepared = prepareCall(options, methodName);
+    const managedSignal = options.deadline
+      ? prepared.options.signal
+      : undefined;
+    let disposed = false;
+    const dispose = () => {
+      if (!disposed) {
+        disposed = true;
+        managedSignal?.removeEventListener('abort', dispose);
+        prepared.dispose();
+        this.callDisposers.delete(dispose);
+      }
+    };
+
+    this.callDisposers.add(dispose);
+    managedSignal?.addEventListener('abort', dispose, { once: true });
+
+    if (managedSignal?.aborted) {
+      dispose();
+    }
+
+    return {
+      ...prepared,
+      dispose
+    };
   }
 }
 
@@ -375,6 +415,7 @@ function prepareCall(
 
   if (metadata) {
     callOptions.metadata = metadata;
+    setMetadataOverrideKeys(callOptions, options.metadata ?? {});
   }
   if (preparedSignal.signal) {
     callOptions.signal = preparedSignal.signal;
@@ -444,17 +485,39 @@ function prepareSignal(
   const controller = new AbortController();
   let cancellationSource: 'caller' | 'deadline' | undefined;
   let timeout: NodeJS.Timeout | undefined;
+  const clearDeadlineTimer = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = undefined;
+    }
+  };
   const abortForCaller = () => {
     if (!controller.signal.aborted) {
       cancellationSource = 'caller';
+      clearDeadlineTimer();
       controller.abort();
     }
   };
   const abortForDeadline = () => {
     if (!controller.signal.aborted) {
       cancellationSource = 'deadline';
+      signal?.removeEventListener('abort', abortForCaller);
       controller.abort();
     }
+  };
+  const scheduleDeadline = () => {
+    const remaining = deadlineTime - Date.now();
+
+    if (remaining <= 0) {
+      abortForDeadline();
+      return;
+    }
+
+    timeout = setTimeout(
+      scheduleDeadline,
+      Math.min(remaining, MAX_TIMEOUT_DELAY)
+    );
+    timeout.unref();
   };
 
   if (signal?.aborted) {
@@ -465,21 +528,20 @@ function prepareSignal(
   }
   else {
     signal?.addEventListener('abort', abortForCaller, { once: true });
-    timeout = setTimeout(abortForDeadline, deadlineTime - Date.now());
-    timeout.unref();
+    scheduleDeadline();
   }
 
   return {
     signal: controller.signal,
     dispose: () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      clearDeadlineTimer();
       signal?.removeEventListener('abort', abortForCaller);
     },
     deadlineExceeded: () => cancellationSource === 'deadline'
   };
 }
+
+const MAX_TIMEOUT_DELAY = 2_147_483_647;
 
 function isAbortError(error: unknown): boolean {
   return typeof error === 'object'

@@ -13,6 +13,7 @@ They must not be changed without clear necessity.
 The script contract is defined in [`package.json`](../../package.json):
 
 - `npm run build` compiles TypeScript;
+- `npm run generate:proto` regenerates TypeScript bindings from `contracts/Flight.proto`;
 - `npm test` runs compiled tests through `fwa --prune`;
 - `npm run test:pyarrow` runs the compiled live PyArrow compatibility suite;
 - `npm run lint` runs ESLint;

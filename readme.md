@@ -140,8 +140,9 @@ const info = await client.getFlightInfo(descriptor, {
 });
 ```
 
-Per-call metadata replaces configured values with the same key. A TLS private
-key and certificate chain must be provided together for mutual TLS. Message
+Per-call metadata replaces configured values with the same key; use an empty
+array to remove a configured key for one call. A TLS private key and certificate
+chain must be provided together for mutual TLS. Message
 limits are expressed in bytes and map to gRPC receive/send limits. Allow room
 for the serialized `FlightData` envelope above the Arrow body size; raising a
 limit does not replace bounded record batches. `-1` disables a limit and should
@@ -200,6 +201,15 @@ npm run lint
 npm run build
 npm test
 ```
+
+After changing `contracts/Flight.proto`, regenerate the bindings:
+
+```sh
+npm run generate:proto
+```
+
+The command uses the pinned project-local `ts-proto` generator and `grpc-tools`
+compiler.
 
 Tests run against compiled JavaScript, so run `npm run build` before `npm test`
 after changing TypeScript sources. Package publication invokes the build through
