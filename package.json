@@ -21,6 +21,14 @@
     "type": "git",
     "url": "git+https://github.com/woodger/arrow-flight-client.git"
   },
+  "directories": {
+    "doc": "docs"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/woodger/arrow-flight-client/issues"
+  },
+  "homepage": "https://github.com/woodger/arrow-flight-client#readme",
   "engines": {
     "node": ">=16.9.0"
   },
