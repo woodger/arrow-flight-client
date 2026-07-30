@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.11] - 2026-07-30
+
+### Added
+
+- Added standard npm metadata for the documentation directory, CommonJS module
+  type, issue tracker, and project homepage.
+- Added a committed Yarn Classic lockfile for reproducible development
+  installs while keeping it out of the published package.
+
 ### Fixed
 
 - Streamed `Table` uploads one record batch at a time and delivered metadata-only
@@ -17,8 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Restored the project-local protobuf generation command with a pinned generator
-  toolchain.
+- Restored the project-local protobuf generation command with a pinned
+  toolchain and regenerated bindings from the current Flight contract.
 - Replaced ESLint with a pinned Biome linter while preserving the project lint
   command and excluding generated bindings.
 - Upgraded the development compiler to TypeScript 7.0.2 and Fwa to 2.1.0,
@@ -179,8 +188,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.10...HEAD
-[0.0.10]: https://github.com/woodger/arrow-flight-client/compare/v0.0.9...v0.0.10
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.11...HEAD
+[0.0.11]: https://github.com/woodger/arrow-flight-client/compare/f14c512751f452f21903c7896e024282df9b6ab7...v0.0.11
+[0.0.10]: https://github.com/woodger/arrow-flight-client/compare/v0.0.9...f14c512751f452f21903c7896e024282df9b6ab7
 [0.0.9]: https://github.com/woodger/arrow-flight-client/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/woodger/arrow-flight-client/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/woodger/arrow-flight-client/compare/70c990a8066f504a590204416e4cc580c1ca6c15...v0.0.7

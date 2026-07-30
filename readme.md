@@ -228,7 +228,7 @@ PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).
-[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/generated/Flight.ts)
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/src/generated/Flight.ts)
 is generated code and must not be edited manually. Development and review
 rules are documented in the [project policies](./docs/policy/index.md), and
 release history is maintained in the [changelog](./CHANGELOG.md).
