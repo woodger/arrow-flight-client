@@ -5,6 +5,6 @@ test/
 src/
 dist/raw.*
 tsconfig.json
-eslint.config.mjs
+biome.json
 **/*.test.*
 **/*.e2e.*

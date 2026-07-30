@@ -40,7 +40,7 @@
     "prepack": "tsc",
     "test": "fwa --prune",
     "test:pyarrow": "node --test dist/client/flight-client.pyarrow.e2e.js",
-    "lint": "eslint"
+    "lint": "biome lint --error-on-warnings ."
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.1",
@@ -52,15 +52,12 @@
     "apache-arrow": "^21.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@biomejs/biome": "2.5.6",
     "@types/node": "^26.0.1",
     "apache-arrow": "^21.1.0",
-    "eslint": "^9.39.4",
     "fwa": "^2.0.6",
-    "globals": "^17.7.0",
     "grpc-tools": "1.13.1",
     "ts-proto": "2.10.1",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.0"
+    "typescript": "^6.0.3"
   }
 }
