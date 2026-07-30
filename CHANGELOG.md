@@ -24,8 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded the development compiler to TypeScript 7.0.2 and Fwa to 2.1.0,
   removing the test runner's dependency on the compiler API.
 - Simplified the package export map to expose only the root entrypoint.
-- Moved the TypeScript examples into copyable Markdown guides that import the
-  published package.
+- Moved verified consumer guides to `docs/guides/` as published documentation,
+  removed the unverified DuckDB Flight setup, and kept contributor policies
+  under `docs/policy/` out of the npm package.
 
 ## [0.0.10] - 2026-07-19
 

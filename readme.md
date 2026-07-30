@@ -179,8 +179,8 @@ type RawClient = flightProtocol.FlightRawClient;
 ```
 
 The API boundaries and intentional limitations are described in the
-[public API design](./docs/public-api.md). More scenarios are available in the
-[examples](./docs/examples/index.md).
+[public API design](./docs/public-api.md). More scenarios are covered by the
+[consumer guides](./docs/guides/index.md).
 
 ## Current Limitations
 
@@ -193,10 +193,10 @@ The API boundaries and intentional limitations are described in the
 
 ## Development
 
-Install dependencies and run the repository checks:
+Install dependencies from the committed lockfile and run the repository checks:
 
 ```sh
-npm install
+yarn install --frozen-lockfile
 npm run lint
 npm run build
 npm test
@@ -216,12 +216,15 @@ after changing TypeScript sources. Package publication invokes the build through
 `prepack`.
 
 The live Node-to-PyArrow suite is separate from the unit-test command. Install
-its pinned Python dependency, build, and run it explicitly:
+its pinned dependency in a virtual environment, build, and point the suite to
+that environment's Python interpreter:
 
 ```sh
-python3 -m pip install -r test/pyarrow/requirements.txt
+PYARROW_VENV="$(mktemp -d)"
+python3 -m venv "$PYARROW_VENV"
+"$PYARROW_VENV/bin/python" -m pip install -r test/pyarrow/requirements.txt
 npm run build
-npm run test:pyarrow
+PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).

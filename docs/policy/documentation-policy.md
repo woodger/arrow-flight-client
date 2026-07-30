@@ -43,7 +43,8 @@ Navigation documents must help find the source of truth, not become a second REA
 derived artifact, not a place for manual contract edits. Protocol changes start
 in `contracts/Flight.proto` and use `npm run generate:proto`.
 
-Examples demonstrate intended usage but do not override the public exports, types, or tested behavior.
+Consumer guides demonstrate intended usage but do not override the public
+exports, types, or tested behavior.
 
 ## Changelog
 

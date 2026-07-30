@@ -113,7 +113,9 @@ An integration test may import through the public entrypoint if it verifies obse
 
 Unit tests must not require a live Flight server. gRPC streams and external responses should be represented by the smallest test double that preserves the behavior under test.
 
-Tests against PyArrow, DuckDB, or another Flight implementation are integration tests. Their server requirement, credentials, ports, and lifecycle must be explicit and must not be hidden inside a unit test command.
+Tests against PyArrow or another Flight implementation are integration tests.
+Their server requirement, credentials, ports, and lifecycle must be explicit
+and must not be hidden inside a unit test command.
 
 Protocol-level tests should assert observable Arrow Flight behavior, including:
 

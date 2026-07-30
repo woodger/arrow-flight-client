@@ -1,8 +1,8 @@
-# Authentication Examples
+# Authentication Guide
 
-These examples configure authentication for a Flight server listening on
-`localhost:8815`. See the [main examples guide](./index.md) for discovery,
-downloads, streaming, and uploads.
+This guide contains code snippets for configuring authentication with a Flight
+server listening on `localhost:8815`. See the [main guides index](./index.md)
+for discovery, downloads, streaming, and uploads.
 
 ## Bearer Token
 

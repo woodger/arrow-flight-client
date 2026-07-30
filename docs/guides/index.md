@@ -1,7 +1,9 @@
-# Examples
+# Guides
 
-These examples use the public `arrow-flight-client` package API against an
-Arrow Flight server listening on `localhost:8815`.
+These consumer guides explain common `arrow-flight-client` scenarios with
+copyable TypeScript snippets. They are documentation, not self-contained
+runnable example projects. The snippets assume an Arrow Flight server
+listening on `localhost:8815`.
 
 Install the client and its required Arrow peer dependency:
 
@@ -11,8 +13,8 @@ npm install arrow-flight-client apache-arrow@^21.1.0
 
 The package does not include a Flight server. Descriptors, tickets, actions,
 and authentication are application-defined, so adapt those values to the
-server you are using. See also the guides for
-[authentication](./authentication.md) and [DuckDB](./duckdb.md).
+server you are using. See also the
+[authentication guide](./authentication.md).
 
 ## List Flights
 
