@@ -37,7 +37,7 @@ The published client supports the Node.js range declared in `package.json`. Repo
 
 The live PyArrow compatibility suite is deliberately separate from the unit-test
 command. It requires the pinned dependency in
-[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/test/pyarrow/requirements.txt)
+[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/test/pyarrow/requirements.txt)
 and runs after compilation with:
 
 ```sh
@@ -78,15 +78,19 @@ src/client/do-put.ts              -> src/client/do-put.test.ts
 src/client/metadata-middleware.ts -> src/client/metadata-middleware.test.ts
 ```
 
-Creating a test whose name looks like a test for a directory or a barrel module is forbidden:
+Creating a test whose name looks like a test for a directory or an internal
+barrel module is forbidden:
 
 ```text
 src/client.test.ts
 src/client/index.test.ts
-src/index.test.ts                 # when src/index.ts only re-exports symbols
 ```
 
-An exception is allowed when a file is a runtime or package entrypoint with behavior of its own. In that case, the test must verify entrypoint behavior, not the internal files of the directory.
+The root package entrypoint is an exception even when its implementation only
+re-exports symbols: its runtime and type export surface is an observable public
+contract. `src/index.test.ts` may verify which contracts are exposed, omitted,
+or grouped under a namespace, but it must not repeat behavior tests owned by
+the exported modules.
 
 Integration and end-to-end tests may cover several production files. Their scope must be visible in the filename or suite name, for example `flight-client.e2e.test.ts`, and their assertions must verify integration behavior rather than repeat unit tests.
 
@@ -113,7 +117,9 @@ An integration test may import through the public entrypoint if it verifies obse
 
 Unit tests must not require a live Flight server. gRPC streams and external responses should be represented by the smallest test double that preserves the behavior under test.
 
-Tests against PyArrow, DuckDB, or another Flight implementation are integration tests. Their server requirement, credentials, ports, and lifecycle must be explicit and must not be hidden inside a unit test command.
+Tests against PyArrow or another Flight implementation are integration tests.
+Their server requirement, credentials, ports, and lifecycle must be explicit
+and must not be hidden inside a unit test command.
 
 Protocol-level tests should assert observable Arrow Flight behavior, including:
 

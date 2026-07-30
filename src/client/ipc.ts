@@ -65,7 +65,11 @@ export async function* encodeFlightData(
           // MessageReader removes stream framing; Flight expects the raw flatbuffer here.
           dataHeader: Buffer.from(Message.encode(message)),
           appMetadata: Buffer.alloc(0),
-          dataBody: Buffer.from(body)
+          dataBody: Buffer.from(
+            body.buffer,
+            body.byteOffset,
+            body.byteLength
+          )
         };
         messageIndex++;
 
@@ -92,15 +96,11 @@ export async function* encodeFlightData(
     }
   };
 
-  if (source instanceof Table) {
-    yield* emitIpc(tableToIPC(source, 'stream'), true);
-    return;
-  }
-
-  let schema = options.schema;
+  const batches = source instanceof Table ? source.batches : source;
+  let schema = source instanceof Table ? source.schema : options.schema;
   let batchCount = 0;
 
-  for await (const batch of source) {
+  for await (const batch of batches) {
     if (!(batch instanceof RecordBatch)) {
       throw new TypeError('DoPut sources must contain Arrow RecordBatch values');
     }
@@ -136,13 +136,9 @@ export async function* decodeFlightData(
   onEvent: (event: FlightIpcEvent) => void
 ): AsyncIterable<Uint8Array> {
   for await (const message of source) {
-    if (message.dataHeader.byteLength === 0) {
-      if (message.dataBody.byteLength !== 0) {
-        throw new FlightProtocolError(
-          'FlightData contains a data body without an IPC message header'
-        );
-      }
+    const ipcMessage = decodeFlightIpcMessage(message);
 
+    if (!ipcMessage) {
       if (message.appMetadata.byteLength !== 0) {
         onEvent({
           type: 'metadata',
@@ -151,15 +147,6 @@ export async function* decodeFlightData(
       }
 
       continue;
-    }
-
-    const ipcMessage = Message.decode(message.dataHeader);
-
-    if (ipcMessage.bodyLength !== message.dataBody.byteLength) {
-      throw new FlightProtocolError(
-        `FlightData body length ${message.dataBody.byteLength} does not match ` +
-        `the IPC header length ${ipcMessage.bodyLength}`
-      );
     }
 
     const appMetadata = message.appMetadata.byteLength === 0
@@ -179,6 +166,31 @@ export async function* decodeFlightData(
       yield message.dataBody;
     }
   }
+}
+
+export function decodeFlightIpcMessage(
+  message: FlightData
+): Message | undefined {
+  if (message.dataHeader.byteLength === 0) {
+    if (message.dataBody.byteLength !== 0) {
+      throw new FlightProtocolError(
+        'FlightData contains a data body without an IPC message header'
+      );
+    }
+
+    return undefined;
+  }
+
+  const ipcMessage = Message.decode(message.dataHeader);
+
+  if (ipcMessage.bodyLength !== message.dataBody.byteLength) {
+    throw new FlightProtocolError(
+      `FlightData body length ${message.dataBody.byteLength} does not match ` +
+      `the IPC header length ${ipcMessage.bodyLength}`
+    );
+  }
+
+  return ipcMessage;
 }
 
 function encapsulateMessage(dataHeader: Uint8Array): Uint8Array {

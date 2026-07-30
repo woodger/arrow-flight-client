@@ -1,77 +1,95 @@
+/**
+ * Package entrypoint tests protect the public runtime and type export surface.
+ *
+ * Allowed here:
+ * - asserting root-level runtime export names;
+ * - compiling imports of root-level type contracts;
+ * - verifying namespace wiring at the package boundary.
+ *
+ * This file must not repeat behavior tests owned by exported modules.
+ */
+
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
-import { flightProtocol } from './index';
+import { describe, test } from 'node:test';
+import * as packageExports from './index';
+import type {
+  FlightAction,
+  FlightActionResult,
+  FlightActionType,
+  FlightCallOptions,
+  FlightClientOptions,
+  FlightCommandDescriptor,
+  FlightDataSource,
+  FlightDescriptor,
+  FlightEndpoint,
+  FlightInfo,
+  FlightMetadata,
+  FlightMetadataValue,
+  FlightPathDescriptor,
+  FlightPollInfo,
+  FlightPutOptions,
+  FlightPutResult,
+  FlightStreamChunk,
+  FlightStreamReader,
+  FlightTicket,
+  FlightTlsOptions
+} from './index';
+import { FlightServiceDefinition } from './flight-protocol';
 
-test('package root exposes the curated Flight protocol namespace', () => {
-  const publicValues = [
-    'Action',
-    'ActionType',
-    'BasicAuth',
-    'CancelFlightInfoRequest',
-    'CancelFlightInfoResult',
-    'CancelStatus',
-    'CloseSessionRequest',
-    'CloseSessionResult',
-    'CloseSessionStatus',
-    'Criteria',
-    'Empty',
-    'FlightData',
-    'FlightDescriptor',
-    'FlightDescriptorType',
-    'FlightEndpoint',
-    'FlightInfo',
-    'FlightServiceDefinition',
-    'GetSessionOptionsRequest',
-    'GetSessionOptionsResult',
-    'HandshakeRequest',
-    'HandshakeResponse',
-    'Location',
-    'PollInfo',
-    'PutResult',
-    'RawMetadata',
-    'RenewFlightEndpointRequest',
-    'Result',
-    'SchemaResult',
-    'SessionOptionStringListValue',
-    'SessionOptionValue',
-    'SetSessionOptionsError',
-    'SetSessionOptionsErrorValue',
-    'SetSessionOptionsRequest',
-    'SetSessionOptionsResult',
-    'Ticket'
-  ];
-  const request: flightProtocol.FlightProtocolInput<
-    flightProtocol.HandshakeRequest
-  > = {
-    payload: Buffer.from('credentials')
-  };
-  const message = flightProtocol.HandshakeRequest.create(request);
-  const encoded = flightProtocol.HandshakeRequest.encode(message).finish();
-  const decoded = flightProtocol.HandshakeRequest.decode(encoded);
-  const metadata = flightProtocol.RawMetadata({ authorization: 'Bearer token' });
-  const rawClientMethods = {
-    handshake: true,
-    listFlights: true,
-    getFlightInfo: true,
-    pollFlightInfo: true,
-    getSchema: true,
-    doGet: true,
-    doPut: true,
-    doExchange: true,
-    doAction: true,
-    listActions: true
-  } satisfies Record<keyof flightProtocol.FlightRawClient, true>;
+type RootClientTypeContracts = [
+  FlightAction,
+  FlightActionResult,
+  FlightActionType,
+  FlightCallOptions,
+  FlightClientOptions,
+  FlightCommandDescriptor,
+  FlightDataSource,
+  FlightDescriptor,
+  FlightEndpoint,
+  FlightInfo,
+  FlightMetadata,
+  FlightMetadataValue,
+  FlightPathDescriptor,
+  FlightPollInfo,
+  FlightPutOptions,
+  FlightPutResult,
+  FlightStreamChunk,
+  FlightStreamReader,
+  FlightTicket,
+  FlightTlsOptions
+];
 
-  assert.strictEqual(decoded.protocolVersion, 0);
-  assert.strictEqual(decoded.payload.toString(), 'credentials');
-  assert.strictEqual(metadata.get('authorization'), 'Bearer token');
-  assert.strictEqual(
-    flightProtocol.FlightServiceDefinition.methods.doExchange.name,
-    'DoExchange'
-  );
-  assert.deepStrictEqual(
-    Object.keys(rawClientMethods).sort(),
-    Object.keys(flightProtocol.FlightServiceDefinition.methods).sort()
-  );
-  assert.deepStrictEqual(Object.keys(flightProtocol).sort(), publicValues);
+const expectedRootClientTypeContractCount: RootClientTypeContracts['length'] =
+  20;
+
+const runtimeExportNames = [
+  'FlightClient',
+  'FlightProtocolError',
+  'commandDescriptor',
+  'doGetTable',
+  'doPutTable',
+  'flightProtocol',
+  'getFlightInfo',
+  'listFlights',
+  'pathDescriptor'
+] as const;
+
+describe('package entrypoint', () => {
+  test('exposes only the public runtime surface', () => {
+    assert.deepStrictEqual(
+      Object.keys(packageExports).sort(),
+      [...runtimeExportNames].sort()
+    );
+  });
+
+  test('exposes public client type contracts', () => {
+    assert.strictEqual(expectedRootClientTypeContractCount, 20);
+  });
+
+  test('exposes the Flight protocol facade', () => {
+    assert.strictEqual(
+      packageExports.flightProtocol.FlightServiceDefinition,
+      FlightServiceDefinition
+    );
+  });
 });

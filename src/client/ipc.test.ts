@@ -110,6 +110,31 @@ describe('Flight IPC adapter', () => {
     assert.deepStrictEqual(actual.getChild('name')?.toArray(), ['one', 'two']);
   });
 
+  test('keeps record batch boundaries when streaming a Table', async () => {
+    const source = tableFromArrays({ id: [1, 2] });
+    const batch = source.batches[0];
+
+    assert.ok(batch);
+    const table = new Table(source.schema, [
+      batch.slice(0, 1),
+      batch.slice(1, 2)
+    ]);
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('table')),
+      table
+    )) {
+      messages.push(message);
+    }
+
+    const batchCount = messages.filter(({ dataHeader }) => (
+      Message.decode(dataHeader).isRecordBatch()
+    )).length;
+
+    assert.strictEqual(batchCount, 2);
+  });
+
   test('writes application metadata separately after the schema', async () => {
     const table = tableFromArrays({ id: [1] });
     const messages: FlightData[] = [];

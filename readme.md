@@ -140,8 +140,9 @@ const info = await client.getFlightInfo(descriptor, {
 });
 ```
 
-Per-call metadata replaces configured values with the same key. A TLS private
-key and certificate chain must be provided together for mutual TLS. Message
+Per-call metadata replaces configured values with the same key; use an empty
+array to remove a configured key for one call. A TLS private key and certificate
+chain must be provided together for mutual TLS. Message
 limits are expressed in bytes and map to gRPC receive/send limits. Allow room
 for the serialized `FlightData` envelope above the Arrow body size; raising a
 limit does not replace bounded record batches. `-1` disables a limit and should
@@ -178,8 +179,8 @@ type RawClient = flightProtocol.FlightRawClient;
 ```
 
 The API boundaries and intentional limitations are described in the
-[public API design](./docs/public-api.md). More scenarios are available in the
-[examples](./examples/readme.md).
+[public API design](./docs/public-api.md). More scenarios are covered by the
+[consumer guides](./docs/guides/index.md).
 
 ## Current Limitations
 
@@ -192,30 +193,42 @@ The API boundaries and intentional limitations are described in the
 
 ## Development
 
-Install dependencies and run the repository checks:
+Install dependencies from the committed lockfile and run the repository checks:
 
 ```sh
-npm install
+yarn install --frozen-lockfile
 npm run lint
 npm run build
 npm test
 ```
+
+After changing `contracts/Flight.proto`, regenerate the bindings:
+
+```sh
+npm run generate:proto
+```
+
+The command uses the pinned project-local `ts-proto` generator and `grpc-tools`
+compiler.
 
 Tests run against compiled JavaScript, so run `npm run build` before `npm test`
 after changing TypeScript sources. Package publication invokes the build through
 `prepack`.
 
 The live Node-to-PyArrow suite is separate from the unit-test command. Install
-its pinned Python dependency, build, and run it explicitly:
+its pinned dependency in a virtual environment, build, and point the suite to
+that environment's Python interpreter:
 
 ```sh
-python3 -m pip install -r test/pyarrow/requirements.txt
+PYARROW_VENV="$(mktemp -d)"
+python3 -m venv "$PYARROW_VENV"
+"$PYARROW_VENV/bin/python" -m pip install -r test/pyarrow/requirements.txt
 npm run build
-npm run test:pyarrow
+PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).
-[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.10/src/generated/Flight.ts)
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/src/generated/Flight.ts)
 is generated code and must not be edited manually. Development and review
 rules are documented in the [project policies](./docs/policy/index.md), and
 release history is maintained in the [changelog](./CHANGELOG.md).

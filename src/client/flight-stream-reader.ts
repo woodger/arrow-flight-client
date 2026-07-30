@@ -12,7 +12,11 @@
 import { RecordBatchReader, Table } from 'apache-arrow';
 import type { RecordBatch, Schema } from 'apache-arrow';
 import type { FlightData } from '../generated/Flight';
-import { decodeFlightData, FlightProtocolError } from './ipc';
+import {
+  decodeFlightData,
+  decodeFlightIpcMessage,
+  FlightProtocolError
+} from './ipc';
 import type { FlightIpcEvent } from './ipc';
 import type { FlightStreamChunk } from './types';
 
@@ -25,8 +29,13 @@ export interface FlightStreamReader extends AsyncIterable<FlightStreamChunk> {
 class DefaultFlightStreamReader implements FlightStreamReader {
   private readonly events: FlightIpcEvent[] = [];
   private readonly onFinish: () => void;
+  private readonly prefetched: FlightData[] = [];
   private readonly source: AsyncIterable<FlightData>;
+  private eventAvailable = Promise.resolve();
+  private eventIndex = 0;
+  private notifyEventAvailable: (() => void) | undefined;
   private reader: RecordBatchReader | undefined;
+  private sourceIterator: AsyncIterator<FlightData> | undefined;
   private streamSchema: Schema | undefined;
   private reading = false;
   private finished = false;
@@ -34,6 +43,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
   constructor(source: AsyncIterable<FlightData>, onFinish: () => void) {
     this.source = source;
     this.onFinish = onFinish;
+    this.resetEventSignal();
   }
 
   get schema(): Schema {
@@ -45,18 +55,42 @@ class DefaultFlightStreamReader implements FlightStreamReader {
   }
 
   async open(): Promise<this> {
+    const iterator = this.source[Symbol.asyncIterator]();
+    this.sourceIterator = iterator;
+
     try {
-      this.reader = await RecordBatchReader.from(
-        decodeFlightData(this.source, (event) => this.events.push(event))
-      );
-      // Arrow selects an async reader in from(), but the schema is unavailable
-      // until that reader explicitly opens the source.
-      await this.reader.open();
-      this.streamSchema = this.reader.schema;
-      return this;
+      while (true) {
+        const next = await iterator.next();
+
+        if (next.done) {
+          throw new FlightProtocolError(
+            'The Flight response does not contain an Arrow schema'
+          );
+        }
+
+        this.prefetched.push(next.value);
+        const message = decodeFlightIpcMessage(next.value);
+
+        if (!message) {
+          continue;
+        }
+        if (!message.isSchema()) {
+          throw new FlightProtocolError(
+            'The Flight response must begin with an Arrow schema'
+          );
+        }
+
+        this.streamSchema = message.header();
+        return this;
+      }
     }
     catch (error) {
-      this.finish();
+      try {
+        await iterator.return?.();
+      }
+      finally {
+        this.finish();
+      }
       throw error;
     }
   }
@@ -75,7 +109,12 @@ class DefaultFlightStreamReader implements FlightStreamReader {
 
   async cancel(): Promise<void> {
     try {
-      await this.reader?.cancel();
+      if (this.reader) {
+        await this.reader.cancel();
+      }
+      else {
+        await this.sourceIterator?.return?.();
+      }
     }
     finally {
       this.finish();
@@ -83,7 +122,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
   }
 
   async *[Symbol.asyncIterator](): AsyncIterableIterator<FlightStreamChunk> {
-    if (!this.reader) {
+    if (!this.sourceIterator) {
       throw new Error('The Flight stream has not been opened');
     }
     if (this.reading || this.finished) {
@@ -91,65 +130,201 @@ class DefaultFlightStreamReader implements FlightStreamReader {
     }
 
     this.reading = true;
+    const opening = this.openArrowReader();
+    const openingOutcome = opening.then(
+      (reader) => ({ type: 'reader' as const, reader }),
+      (error: unknown) => ({ type: 'error' as const, error })
+    );
+    let reader: RecordBatchReader | undefined;
 
     try {
-      while (true) {
-        const next = await this.reader.next();
+      while (!reader) {
+        const event = this.peekEvent();
 
-        if (next.done) {
-          yield* this.takeTrailingMetadata();
-          return;
-        }
-
-        let matchedBatch = false;
-
-        while (this.events.length !== 0) {
-          const event = this.events.shift();
-
-          if (!event) {
-            break;
-          }
-
-          if (event.type === 'batch') {
-            matchedBatch = true;
-            yield {
-              data: next.value,
-              ...(event.appMetadata ? { appMetadata: event.appMetadata } : {})
-            };
-            break;
-          }
-
+        if (event?.type === 'metadata') {
+          this.takeEvent();
           yield {
             data: null,
             ...(event.appMetadata ? { appMetadata: event.appMetadata } : {})
           };
+          continue;
+        }
+
+        const outcome = event?.type === 'batch'
+          ? await openingOutcome
+          : await Promise.race([
+            openingOutcome,
+            this.eventAvailable.then(() => ({ type: 'event' as const }))
+          ]);
+
+        if (outcome.type === 'event') {
+          continue;
+        }
+        if (outcome.type === 'error') {
+          throw outcome.error;
+        }
+
+        reader = outcome.reader;
+      }
+
+      const openedReader = reader;
+      const readNext = () => {
+        const next = Promise.resolve(openedReader.next());
+        const outcome = next.then(
+          (result) => ({ type: 'reader' as const, result }),
+          (error: unknown) => ({ type: 'error' as const, error })
+        );
+
+        return { next, outcome };
+      };
+      let pending: ReturnType<typeof readNext> | undefined;
+      const ensurePending = () => {
+        pending ??= readNext();
+        return pending;
+      };
+
+      while (true) {
+        const event = this.peekEvent();
+
+        if (event?.type === 'metadata') {
+          this.takeEvent();
+          yield {
+            data: null,
+            ...(event.appMetadata ? { appMetadata: event.appMetadata } : {})
+          };
+          continue;
+        }
+
+        if (event?.type === 'batch') {
+          const next = await ensurePending().next;
+
+          if (next.done) {
+            throw new FlightProtocolError(
+              'FlightData contains a record batch that Arrow did not produce'
+            );
+          }
+
+          this.takeEvent();
+          yield {
+            data: next.value,
+            ...(event.appMetadata ? { appMetadata: event.appMetadata } : {})
+          };
+          pending = undefined;
+          continue;
+        }
+
+        const outcome = await Promise.race([
+          ensurePending().outcome,
+          this.eventAvailable.then(() => ({ type: 'event' as const }))
+        ]);
+
+        if (outcome.type === 'event') {
+          continue;
+        }
+        if (outcome.type === 'error') {
+          throw outcome.error;
+        }
+        if (outcome.result.done) {
+          return;
         }
 
         // Arrow emits an internal zero-row placeholder for a schema-only stream;
         // it has no corresponding FlightData batch and must not reach callers.
-        if (!matchedBatch && next.value.numRows !== 0) {
+        if (outcome.result.value.numRows !== 0) {
           throw new FlightProtocolError(
             'Arrow produced a record batch without a matching FlightData message'
           );
         }
+
+        pending = undefined;
       }
     }
     finally {
       if (!this.finished) {
-        await this.reader.cancel();
-        this.finish();
+        try {
+          if (this.reader) {
+            await this.reader.cancel();
+          }
+          else {
+            await this.sourceIterator.return?.();
+          }
+        }
+        finally {
+          this.finish();
+        }
       }
     }
   }
 
-  private *takeTrailingMetadata(): Iterable<FlightStreamChunk> {
-    for (const event of this.events.splice(0)) {
-      if (event.type === 'metadata') {
-        yield {
-          data: null,
-          ...(event.appMetadata ? { appMetadata: event.appMetadata } : {})
-        };
+  private pushEvent(event: FlightIpcEvent): void {
+    const wasEmpty = this.eventIndex === this.events.length;
+
+    if (wasEmpty) {
+      this.events.length = 0;
+      this.eventIndex = 0;
+    }
+
+    this.events.push(event);
+
+    if (wasEmpty) {
+      this.notifyEventAvailable?.();
+      this.notifyEventAvailable = undefined;
+    }
+  }
+
+  private peekEvent(): FlightIpcEvent | undefined {
+    return this.events[this.eventIndex];
+  }
+
+  private takeEvent(): void {
+    this.eventIndex++;
+
+    if (this.eventIndex === this.events.length) {
+      this.events.length = 0;
+      this.eventIndex = 0;
+      this.resetEventSignal();
+    }
+  }
+
+  private resetEventSignal(): void {
+    this.eventAvailable = new Promise((resolve) => {
+      this.notifyEventAvailable = resolve;
+    });
+  }
+
+  private async openArrowReader(): Promise<RecordBatchReader> {
+    const reader = await RecordBatchReader.from(
+      decodeFlightData(this.replaySource(), (event) => this.pushEvent(event))
+    );
+
+    this.reader = reader;
+    await reader.open();
+    return reader;
+  }
+
+  private async *replaySource(): AsyncIterable<FlightData> {
+    const iterator = this.sourceIterator;
+
+    if (!iterator) {
+      throw new Error('The Flight stream has not been opened');
+    }
+
+    try {
+      yield* this.prefetched.splice(0);
+
+      while (true) {
+        const next = await iterator.next();
+
+        if (next.done) {
+          return;
+        }
+
+        yield next.value;
       }
+    }
+    finally {
+      this.prefetched.length = 0;
+      await iterator.return?.();
     }
   }
 

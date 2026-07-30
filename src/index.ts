@@ -1,3 +1,15 @@
+/**
+ * The package entrypoint defines the public root export surface.
+ *
+ * Allowed here:
+ * - exporting the project-owned high-level client API;
+ * - grouping curated low-level contracts under the flightProtocol namespace;
+ * - preserving standalone compatibility helper exports.
+ *
+ * This file must not implement runtime behavior or expose uncurated generated
+ * internals.
+ */
+
 export { FlightClient } from './client/flight-client';
 export * as flightProtocol from './flight-protocol';
 export type { FlightStreamReader } from './client/flight-stream-reader';

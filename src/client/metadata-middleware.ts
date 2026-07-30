@@ -13,9 +13,18 @@ import type { ClientMiddleware, CallOptions } from 'nice-grpc';
 import { Metadata } from 'nice-grpc-common';
 import type { FlightMetadata } from './types';
 
+const metadataOverrideKeys = Symbol('metadataOverrideKeys');
+
+interface FlightMetadataCallOptions extends CallOptions {
+  [metadataOverrideKeys]?: readonly string[]
+}
+
 export function metadataMiddleware(headers: FlightMetadata): ClientMiddleware {
   return async function* (call, options: CallOptions) {
     const metadata = new Metadata();
+    const overrideKeys = (options as FlightMetadataCallOptions)[
+      metadataOverrideKeys
+    ] ?? [];
 
     for (const [key, value] of Object.entries(headers)) {
       const values = Array.isArray(value) ? [...value] : [value];
@@ -23,6 +32,10 @@ export function metadataMiddleware(headers: FlightMetadata): ClientMiddleware {
       for (const item of values) {
         metadata.append(key, item);
       }
+    }
+
+    for (const key of overrideKeys) {
+      metadata.delete(key);
     }
 
     for (const [key, values] of options.metadata ?? []) {
@@ -38,4 +51,12 @@ export function metadataMiddleware(headers: FlightMetadata): ClientMiddleware {
       metadata
     });
   }
+}
+
+export function setMetadataOverrideKeys(
+  options: CallOptions,
+  headers: FlightMetadata
+): void {
+  (options as FlightMetadataCallOptions)[metadataOverrideKeys] =
+    Object.keys(headers);
 }
