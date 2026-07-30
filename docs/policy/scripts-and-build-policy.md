@@ -16,7 +16,7 @@ The script contract is defined in [`package.json`](../../package.json):
 - `npm run generate:proto` regenerates TypeScript bindings from `contracts/Flight.proto`;
 - `npm test` runs compiled tests through `fwa --prune`;
 - `npm run test:pyarrow` runs the compiled live PyArrow compatibility suite;
-- `npm run lint` runs Biome over the maintained TypeScript sources and examples;
+- `npm run lint` runs Biome over the TypeScript sources under `src/`;
 - `prepack` compiles the package before packing or publication.
 
 Tests do not compile source files themselves. After a TypeScript change, run `npm run build` before `npm test`.
