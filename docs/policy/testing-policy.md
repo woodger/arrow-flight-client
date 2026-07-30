@@ -78,15 +78,19 @@ src/client/do-put.ts              -> src/client/do-put.test.ts
 src/client/metadata-middleware.ts -> src/client/metadata-middleware.test.ts
 ```
 
-Creating a test whose name looks like a test for a directory or a barrel module is forbidden:
+Creating a test whose name looks like a test for a directory or an internal
+barrel module is forbidden:
 
 ```text
 src/client.test.ts
 src/client/index.test.ts
-src/index.test.ts                 # when src/index.ts only re-exports symbols
 ```
 
-An exception is allowed when a file is a runtime or package entrypoint with behavior of its own. In that case, the test must verify entrypoint behavior, not the internal files of the directory.
+The root package entrypoint is an exception even when its implementation only
+re-exports symbols: its runtime and type export surface is an observable public
+contract. `src/index.test.ts` may verify which contracts are exposed, omitted,
+or grouped under a namespace, but it must not repeat behavior tests owned by
+the exported modules.
 
 Integration and end-to-end tests may cover several production files. Their scope must be visible in the filename or suite name, for example `flight-client.e2e.test.ts`, and their assertions must verify integration behavior rather than repeat unit tests.
 
