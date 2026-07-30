@@ -7,7 +7,7 @@ import { encodeDescriptor } from './protocol';
 import { pathDescriptor } from './types';
 import type { FlightData } from '../generated/Flight';
 
-describe('FlightStreamReader', () => {
+describe('Flight stream reader integration', () => {
   test('keeps batch and metadata-only messages in stream order', async () => {
     const table = tableFromArrays({ id: [1, 2] });
     const messages: FlightData[] = [];
@@ -28,10 +28,9 @@ describe('FlightStreamReader', () => {
       appMetadata: Buffer.from('trailing')
     });
 
-    let finished = false;
     const reader = await createFlightStreamReader(
       asAsync(messages),
-      () => { finished = true; }
+      () => undefined
     );
     const chunks = [];
 
@@ -43,6 +42,29 @@ describe('FlightStreamReader', () => {
     assert.strictEqual(Buffer.from(chunks[0]?.appMetadata ?? []).toString(), 'batch');
     assert.strictEqual(chunks[1]?.data, null);
     assert.strictEqual(Buffer.from(chunks[1]?.appMetadata ?? []).toString(), 'trailing');
+  });
+
+  test('finishes after the response stream is consumed', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('example')),
+      table
+    )) {
+      messages.push(message);
+    }
+
+    let finished = false;
+    const reader = await createFlightStreamReader(
+      asAsync(messages),
+      () => { finished = true; }
+    );
+
+    for await (const chunk of reader) {
+      void chunk;
+    }
+
     assert.strictEqual(finished, true);
   });
 });

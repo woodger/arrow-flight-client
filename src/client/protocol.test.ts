@@ -10,51 +10,86 @@ import { commandDescriptor, pathDescriptor } from './types';
 import { FlightDescriptor_DescriptorType } from '../generated/Flight';
 
 describe('Flight protocol adapter', () => {
-  test('encodes project-owned descriptors', () => {
-    assert.deepStrictEqual(encodeDescriptor(pathDescriptor('db', 'table')), {
-      type: FlightDescriptor_DescriptorType.PATH,
-      path: ['db', 'table'],
-      cmd: Buffer.alloc(0)
+  describe('encodeDescriptor', () => {
+    test('encodes a path descriptor', () => {
+      assert.deepStrictEqual(encodeDescriptor(pathDescriptor('db', 'table')), {
+        type: FlightDescriptor_DescriptorType.PATH,
+        path: ['db', 'table'],
+        cmd: Buffer.alloc(0)
+      });
     });
-    assert.deepStrictEqual(encodeDescriptor(commandDescriptor(Buffer.from('sql'))), {
-      type: FlightDescriptor_DescriptorType.CMD,
-      path: [],
-      cmd: Buffer.from('sql')
+
+    test('encodes a command descriptor', () => {
+      assert.deepStrictEqual(
+        encodeDescriptor(commandDescriptor(Buffer.from('sql'))),
+        {
+          type: FlightDescriptor_DescriptorType.CMD,
+          path: [],
+          cmd: Buffer.from('sql')
+        }
+      );
     });
   });
 
-  test('decodes FlightInfo and PollInfo without generated public values', () => {
-    const table = tableFromArrays({ id: [1] });
-    const schema = schemaMessage(table);
-    const protocolInfo = {
-      schema,
-      flightDescriptor: encodeDescriptor(pathDescriptor('example')),
-      endpoint: [{
-        ticket: { ticket: Buffer.from('ticket') },
-        location: [{ uri: 'grpc://other:8815' }],
-        expirationTime: new Date('2026-07-18T00:00:00Z'),
-        appMetadata: Buffer.from('endpoint')
-      }],
-      totalRecords: 1,
-      totalBytes: 8,
-      ordered: true,
-      appMetadata: Buffer.from('info')
-    };
+  describe('decodeFlightInfo', () => {
+    test('returns project-owned Flight information', () => {
+      const table = tableFromArrays({ id: [1] });
+      const endpointExpiration = new Date('2026-07-18T00:00:00Z');
+      const info = decodeFlightInfo({
+        schema: schemaMessage(table),
+        flightDescriptor: encodeDescriptor(pathDescriptor('example')),
+        endpoint: [{
+          ticket: { ticket: Buffer.from('ticket') },
+          location: [{ uri: 'grpc://other:8815' }],
+          expirationTime: endpointExpiration,
+          appMetadata: Buffer.from('endpoint')
+        }],
+        totalRecords: 1,
+        totalBytes: 8,
+        ordered: true,
+        appMetadata: Buffer.from('info')
+      });
 
-    const info = decodeFlightInfo(protocolInfo);
-    const poll = decodePollInfo({
-      info: protocolInfo,
-      flightDescriptor: undefined,
-      progress: 0.5,
-      expirationTime: undefined
+      assert.ok(util.compareSchemas(info.schema, table.schema));
+      assert.deepStrictEqual(info.descriptor, pathDescriptor('example'));
+      assert.strictEqual(
+        Buffer.from(info.endpoints[0]?.ticket ?? []).toString(),
+        'ticket'
+      );
+      assert.deepStrictEqual(
+        info.endpoints[0]?.locations,
+        ['grpc://other:8815']
+      );
+      assert.strictEqual(
+        info.endpoints[0]?.expirationTime,
+        endpointExpiration
+      );
+      assert.strictEqual(
+        Buffer.from(info.endpoints[0]?.appMetadata ?? []).toString(),
+        'endpoint'
+      );
+      assert.strictEqual(info.totalRecords, 1);
+      assert.strictEqual(info.totalBytes, 8);
+      assert.strictEqual(info.ordered, true);
+      assert.strictEqual(Buffer.from(info.appMetadata).toString(), 'info');
     });
+  });
 
-    assert.ok(util.compareSchemas(info.schema, table.schema));
-    assert.deepStrictEqual(info.descriptor, pathDescriptor('example'));
-    assert.strictEqual(Buffer.from(info.endpoints[0]?.ticket ?? []).toString(), 'ticket');
-    assert.deepStrictEqual(info.endpoints[0]?.locations, ['grpc://other:8815']);
-    assert.strictEqual(poll.progress, 0.5);
-    assert.ok(poll.info);
+  describe('decodePollInfo', () => {
+    test('returns project-owned polling information', () => {
+      const expiration = new Date('2026-07-18T00:00:00Z');
+      const poll = decodePollInfo({
+        info: undefined,
+        flightDescriptor: encodeDescriptor(pathDescriptor('next')),
+        progress: 0.5,
+        expirationTime: expiration
+      });
+
+      assert.strictEqual(poll.info, undefined);
+      assert.deepStrictEqual(poll.descriptor, pathDescriptor('next'));
+      assert.strictEqual(poll.progress, 0.5);
+      assert.strictEqual(poll.expirationTime, expiration);
+    });
   });
 });
 

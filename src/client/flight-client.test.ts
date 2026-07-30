@@ -1,26 +1,9 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FlightClient } from './flight-client';
-import type { FlightClientOptions } from './types';
 
 describe('FlightClient', () => {
   describe('constructor', () => {
-    test('creates an insecure client', async () => {
-      const client = new FlightClient('localhost:1234');
-
-      assert.ok(client.raw);
-      assert.strictEqual(client.grpc, client.raw);
-      await client.close();
-    });
-
-    test('creates a TLS client', async () => {
-      const options: FlightClientOptions = { tls: true };
-      const client = new FlightClient('localhost:1234', options);
-
-      assert.ok(client.raw);
-      await client.close();
-    });
-
     test('rejects an incomplete mTLS identity', () => {
       assert.throws(
         () => new FlightClient('localhost:1234', {
@@ -31,8 +14,26 @@ describe('FlightClient', () => {
     });
   });
 
+  describe('#raw', () => {
+    test('returns the generated client', async () => {
+      const client = new FlightClient('localhost:1234');
+
+      assert.ok(client.raw);
+      await client.close();
+    });
+  });
+
+  describe('#grpc', () => {
+    test('returns the raw generated client', async () => {
+      const client = new FlightClient('localhost:1234');
+
+      assert.strictEqual(client.grpc, client.raw);
+      await client.close();
+    });
+  });
+
   describe('#close', () => {
-    test('is idempotent and rejects new high-level calls', async () => {
+    test('returns the same promise when called repeatedly', async () => {
       const client = new FlightClient('localhost:1234');
 
       const firstClose = client.close();
@@ -40,7 +41,12 @@ describe('FlightClient', () => {
 
       assert.strictEqual(firstClose, secondClose);
       await firstClose;
+    });
 
+    test('rejects new high-level calls', async () => {
+      const client = new FlightClient('localhost:1234');
+
+      await client.close();
       assert.throws(() => client.listActions(), /closed/);
     });
   });

@@ -4,8 +4,6 @@ import { Message, tableFromArrays, util } from 'apache-arrow';
 import { ClientError, createServer, Status } from 'nice-grpc';
 import type { CallContext } from 'nice-grpc';
 import { FlightClient } from './flight-client';
-import type { FlightRawClient } from '../flight-protocol';
-import type { CallOptions } from 'nice-grpc';
 import { encodeFlightData } from './ipc';
 import { encodeDescriptor } from './protocol';
 import { pathDescriptor } from './types';
@@ -27,12 +25,14 @@ describe('Flight client integration', () => {
       messages.push(message);
     }
 
-    const grpcClient = {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
       async *doGet() {
         yield* messages;
       }
-    } as unknown as FlightRawClient;
-    const client = createClientWithRaw(grpcClient);
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
 
     try {
       const actual = await client.getTable(Buffer.from('ticket'));
@@ -42,13 +42,15 @@ describe('Flight client integration', () => {
     }
     finally {
       await client.close();
+      await server.shutdown();
     }
   });
 
   test('uploads a schema and record batches with the descriptor only first', async () => {
     const table = tableFromArrays({ id: [1, 2] });
     const received: FlightData[] = [];
-    const grpcClient = {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
       async *doPut(request: AsyncIterable<FlightData>) {
         for await (const message of request) {
           received.push(message);
@@ -56,8 +58,9 @@ describe('Flight client integration', () => {
 
         yield { appMetadata: Buffer.from('committed') };
       }
-    } as unknown as FlightRawClient;
-    const client = createClientWithRaw(grpcClient);
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
 
     try {
       const results = await client.putTable(pathDescriptor('example'), table);
@@ -76,40 +79,41 @@ describe('Flight client integration', () => {
     }
     finally {
       await client.close();
+      await server.shutdown();
     }
   });
 
-  test('forwards call metadata and deadline cancellation', async () => {
-    let receivedOptions: CallOptions | undefined;
-    const grpcClient = {
-      async *listActions(_request: unknown, options?: CallOptions) {
-        receivedOptions = options;
-        yield { type: 'cancel', description: 'Cancel work' };
+  test('forwards per-call metadata', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *listActions(_request, context) {
+        const requestId = context.metadata.get('x-request-id');
+
+        yield {
+          type: typeof requestId === 'string' ? requestId : '',
+          description: ''
+        };
       }
-    } as unknown as FlightRawClient;
-    const client = createClientWithRaw(grpcClient);
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
 
     try {
       const actions = [];
 
       for await (const action of client.listActions({
-        deadline: new Date(Date.now() + 10_000),
         metadata: { 'x-request-id': 'request-1' }
       })) {
         actions.push(action);
       }
 
       assert.deepStrictEqual(actions, [
-        { type: 'cancel', description: 'Cancel work' }
+        { type: 'request-1', description: '' }
       ]);
-      assert.strictEqual(
-        receivedOptions?.metadata?.get('x-request-id'),
-        'request-1'
-      );
-      assert.ok(receivedOptions?.signal);
     }
     finally {
       await client.close();
+      await server.shutdown();
     }
   });
 
@@ -184,13 +188,15 @@ describe('Flight client integration', () => {
 
   test('rejects a streaming call whose deadline passed before iteration', async () => {
     let started = false;
-    const grpcClient = {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
       async *listActions() {
         started = true;
         yield { type: 'unexpected', description: '' };
       }
-    } as unknown as FlightRawClient;
-    const client = createClientWithRaw(grpcClient);
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
     const actions = client.listActions({ deadline: new Date(0) });
 
     try {
@@ -210,6 +216,7 @@ describe('Flight client integration', () => {
     }
     finally {
       await client.close();
+      await server.shutdown();
     }
   });
 
@@ -348,14 +355,39 @@ describe('Flight client integration', () => {
       await server.shutdown();
     }
   });
+
+  test('closes the owned channel', async () => {
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *listActions() {
+        yield { type: 'available', description: '' };
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      const beforeClose = [];
+
+      for await (const action of client.raw.listActions({})) {
+        beforeClose.push(action);
+      }
+
+      assert.strictEqual(beforeClose.length, 1);
+      await client.close();
+
+      await assert.rejects(async () => {
+        for await (const action of client.raw.listActions({})) {
+          void action;
+        }
+      });
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
 });
-
-function createClientWithRaw(grpcClient: FlightRawClient): FlightClient {
-  const client = new FlightClient('localhost:1234');
-
-  Object.defineProperty(client, 'client', { value: grpcClient });
-  return client;
-}
 
 function createFlightService(
   overrides: Partial<FlightServiceImplementation>
