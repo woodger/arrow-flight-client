@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   toolchain.
 - Replaced ESLint with a pinned Biome linter while preserving the project lint
   command and excluding generated bindings.
+- Upgraded the development compiler to TypeScript 7.0.2 and Fwa to 2.1.0,
+  removing the test runner's dependency on the compiler API.
 
 ## [0.0.10] - 2026-07-19
 
