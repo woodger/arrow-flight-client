@@ -8,11 +8,11 @@
 Карта точек входа пакета определяется в [`package.json`](../../package.json).
 Корневая поверхность исходного кода и отобранное пространство имён
 низкоуровневого протокола определяются в
-[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/src/index.ts)
+[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/src/index.ts)
 и
-[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/src/flight-protocol.ts).
+[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/src/flight-protocol.ts).
 Наблюдаемое поведение потоков защищено тестами, расположенными рядом с кодом в
-[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.11/src/client),
+[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.12/src/client),
 а контракт передачи данных остаётся в
 [`contracts/Flight.proto`](../../contracts/Flight.proto).
 

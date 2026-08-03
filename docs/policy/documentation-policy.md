@@ -25,18 +25,18 @@ Navigation documents must help find the source of truth, not become a second REA
 
 - package metadata, supported Node.js version, dependencies, entrypoints, and scripts: [`package.json`](../../package.json);
 - public package surface and curated low-level protocol namespace:
-  [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/src/index.ts)
+  [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/src/index.ts)
   and
-  [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/src/flight-protocol.ts);
+  [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/src/flight-protocol.ts);
 - client behavior:
-  [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.11/src/client);
+  [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.12/src/client);
 - Flight wire contract: [`contracts/Flight.proto`](../../contracts/Flight.proto);
 - generated TypeScript bindings:
-  [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/src/generated/Flight.ts);
+  [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/src/generated/Flight.ts);
 - compiler settings:
-  [`tsconfig.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/tsconfig.json);
+  [`tsconfig.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/tsconfig.json);
 - lint configuration:
-  [`biome.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.11/biome.json);
+  [`biome.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/biome.json);
 - observable behavior: tests colocated with source files under `src/`.
 
 `src/generated/Flight.ts` reflects the protobuf generator output. It is a
