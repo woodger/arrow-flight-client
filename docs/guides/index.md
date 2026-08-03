@@ -1,5 +1,7 @@
 # Guides
 
+English | [Русский](../ru/guides/index.md)
+
 These consumer guides explain common `arrow-flight-client` scenarios with
 copyable TypeScript snippets. They are documentation, not self-contained
 runnable example projects. The snippets assume an Arrow Flight server

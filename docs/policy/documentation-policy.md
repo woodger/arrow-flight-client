@@ -46,6 +46,22 @@ in `contracts/Flight.proto` and use `npm run generate:proto`.
 Consumer guides demonstrate intended usage but do not override the public
 exports, types, or tested behavior.
 
+## Localization
+
+English consumer-facing documentation is authoritative. Russian translations
+live under `docs/ru/` and mirror the structure of their English sources. Each
+translation must be updated in the same change whenever its English source
+changes.
+
+Language navigation must be present in every English and Russian consumer
+document. API identifiers, package names, import specifiers, file paths, and
+exact runtime diagnostics remain unchanged in translations so they continue to
+match executable contracts. Code examples must preserve the behavior of their
+English sources.
+
+Contributor policies and `CHANGELOG.md` are not duplicated across languages.
+Source comments and runtime messages remain in English.
+
 ## Changelog
 
 [`CHANGELOG.md`](../../CHANGELOG.md) follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).

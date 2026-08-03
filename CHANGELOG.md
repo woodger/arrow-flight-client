@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added Russian translations for the README, public API design, and consumer
+  guides, with cross-language navigation and English as the authoritative
+  source.
+
 ## [0.0.11] - 2026-07-30
 
 ### Added
