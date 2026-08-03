@@ -1,6 +1,6 @@
 # Apache Arrow Flight Client for Node.js
 
-English | [Русский](https://github.com/woodger/arrow-flight-client/blob/main/docs/ru/readme.md)
+English | [Русский](https://github.com/woodger/arrow-flight-client/blob/main/docs/ru/readme.md) | [简体中文](https://github.com/woodger/arrow-flight-client/blob/main/docs/zh/readme.md)
 
 [![npm version](https://img.shields.io/npm/v/arrow-flight-client.svg)](https://www.npmjs.com/package/arrow-flight-client)
 [![node](https://img.shields.io/node/v/arrow-flight-client.svg)](https://www.npmjs.com/package/arrow-flight-client)

@@ -1,6 +1,6 @@
 # Public API Design
 
-English | [Русский](ru/public-api.md)
+English | [Русский](ru/public-api.md) | [简体中文](zh/public-api.md)
 
 > Type: Design. This document records the boundary and stability decisions for
 > the Node.js Arrow Flight client.

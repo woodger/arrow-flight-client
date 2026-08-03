@@ -1,6 +1,6 @@
 # Руководство по аутентификации
 
-[English](../../guides/authentication.md) | Русский
+[English](../../guides/authentication.md) | Русский | [简体中文](../../zh/guides/authentication.md)
 
 Это руководство содержит фрагменты кода для настройки аутентификации с сервером
 Flight, который слушает `localhost:8815`. Сценарии обнаружения, загрузки,

@@ -48,16 +48,17 @@ exports, types, or tested behavior.
 
 ## Localization
 
-English consumer-facing documentation is authoritative. Russian translations
-live under `docs/ru/` and mirror the structure of their English sources. Each
-translation must be updated in the same change whenever its English source
-changes.
+English consumer-facing documentation is authoritative. Russian and Simplified
+Chinese translations live under `docs/ru/` and `docs/zh/` and mirror the
+structure of their English sources. `docs/zh/` contains the only supported
+Chinese translation and uses Simplified Chinese. Each translation must be
+updated in the same change whenever its English source changes.
 
-Language navigation must be present in every English and Russian consumer
-document. API identifiers, package names, import specifiers, file paths, and
-exact runtime diagnostics remain unchanged in translations so they continue to
-match executable contracts. Code examples must preserve the behavior of their
-English sources.
+Language navigation must be present in every English, Russian, and Simplified
+Chinese consumer document. API identifiers, package names, import specifiers,
+file paths, and exact runtime diagnostics remain unchanged in translations so
+they continue to match executable contracts. Code examples must preserve the
+behavior of their English sources.
 
 Contributor policies and `CHANGELOG.md` are not duplicated across languages.
 Source comments and runtime messages remain in English.
