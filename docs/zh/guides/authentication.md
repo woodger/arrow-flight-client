@@ -1,14 +1,14 @@
-# Authentication Guide
+# 身份验证指南
 
-English | [Русский](../ru/guides/authentication.md) | [简体中文](../zh/guides/authentication.md)
+[English](../../guides/authentication.md) | [Русский](../../ru/guides/authentication.md) | 简体中文
 
-This guide contains code snippets for configuring authentication with a Flight
-server listening on `localhost:8815`. See the [main guides index](./index.md)
-for discovery, downloads, streaming, and uploads.
+本指南包含为监听 `localhost:8815` 的 Flight 服务器配置身份验证的代码片段。
+有关发现、下载、流式处理和上传的示例，请参阅
+[主要使用指南](./index.md)。
 
 ## Bearer Token
 
-Configured metadata is sent with every high-level client call:
+配置的元数据会随每次高级客户端调用一起发送：
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -33,10 +33,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-## Mutual TLS
+## 双向 TLS
 
-Provide the trusted root certificates and the client identity when the server
-requires mutual TLS:
+服务器要求双向 TLS 时，请提供受信任的根证书和客户端身份：
 
 ```ts
 import fs from 'node:fs';
@@ -64,6 +63,5 @@ async function main() {
 main().catch(console.error);
 ```
 
-Certificate paths are resolved from the process working directory. The private
-key and certificate chain form one client identity and must be configured
-together.
+证书路径相对于进程当前工作目录解析。私钥和证书链共同构成一个客户端身份，
+必须同时配置。

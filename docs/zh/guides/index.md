@@ -1,26 +1,24 @@
-# Guides
+# 使用指南
 
-English | [Русский](../ru/guides/index.md) | [简体中文](../zh/guides/index.md)
+[English](../../guides/index.md) | [Русский](../../ru/guides/index.md) | 简体中文
 
-These consumer guides explain common `arrow-flight-client` scenarios with
-copyable TypeScript snippets. They are documentation, not self-contained
-runnable example projects. The snippets assume an Arrow Flight server
-listening on `localhost:8815`.
+这些使用指南通过可复制的 TypeScript 代码片段说明
+`arrow-flight-client` 的常见用法。它们是文档，而不是可独立运行的示例项目。
+代码片段假定 Arrow Flight 服务器正在监听 `localhost:8815`。
 
-Install the client and its required Arrow peer dependency:
+安装客户端及其必需的 Arrow 对等依赖：
 
 ```sh
 npm install arrow-flight-client apache-arrow@^21.1.0
 ```
 
-The package does not include a Flight server. Descriptors, tickets, actions,
-and authentication are application-defined, so adapt those values to the
-server you are using. See also the
-[authentication guide](./authentication.md).
+该包不包含 Flight 服务器。描述符、票据、操作和身份验证均由应用程序定义，
+因此请根据所使用的服务器调整这些值。另请参阅
+[身份验证指南](./authentication.md)。
 
-## List Flights
+## 列出 Flight
 
-Stream the flights advertised by the server:
+以流式方式处理服务器公布的 Flight：
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -43,10 +41,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-## Download a Table
+## 下载表
 
-Find the first advertised endpoint with a ticket and collect its stream into
-an Arrow table:
+查找第一个带有票据的已公布 endpoint，并将其数据流收集为 Arrow 表：
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -75,10 +72,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-## Stream Record Batches
+## 流式处理记录批次
 
-Use `doGet()` when the response should be consumed incrementally instead of
-collected into one table:
+需要逐步处理响应而不是将其收集为一个表时，请使用 `doGet()`：
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -115,9 +111,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-## Upload a Table
+## 上传表
 
-Upload an Arrow table and consume application metadata returned by the server:
+上传 Arrow 表，并处理服务器返回的应用元数据：
 
 ```ts
 import { FlightClient, pathDescriptor } from 'arrow-flight-client';
@@ -149,6 +145,6 @@ async function main() {
 main().catch(console.error);
 ```
 
-`Handshake` and `DoExchange` remain available through `FlightClient.raw`, with
-their curated messages and codecs under the root `flightProtocol` namespace.
-The caller owns raw `DoExchange` Arrow IPC framing.
+`Handshake` 和 `DoExchange` 仍可通过 `FlightClient.raw` 使用，相应的经过筛选的
+消息和编解码器位于根 `flightProtocol` 命名空间中。底层 `DoExchange` 调用的
+Arrow IPC 帧处理由调用方负责。
