@@ -195,10 +195,10 @@ The API boundaries and intentional limitations are described in the
 
 ## Development
 
-Install dependencies from the committed lockfile and run the repository checks:
+Install the locked dependency tree with npm and run the repository checks:
 
 ```sh
-yarn install --frozen-lockfile
+npm ci
 npm run lint
 npm run build
 npm test

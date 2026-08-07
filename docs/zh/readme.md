@@ -188,10 +188,10 @@ API 边界和有意保留的限制记录在
 
 ## 开发
 
-使用已提交的锁文件安装依赖，然后运行仓库检查：
+使用 npm 安装锁定的依赖树，然后运行仓库检查：
 
 ```sh
-yarn install --frozen-lockfile
+npm ci
 npm run lint
 npm run build
 npm test

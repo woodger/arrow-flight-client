@@ -203,11 +203,11 @@ type RawClient = flightProtocol.FlightRawClient;
 
 ## Разработка
 
-Установите зависимости из зафиксированного lock-файла и запустите проверки
+Установите зафиксированное дерево зависимостей через npm и запустите проверки
 репозитория:
 
 ```sh
-yarn install --frozen-lockfile
+npm ci
 npm run lint
 npm run build
 npm test
