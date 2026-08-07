@@ -6,6 +6,6 @@ test/
 src/
 dist/raw.*
 tsconfig.json
-biome.json
+.oxlintrc.json
 **/*.test.*
 **/*.e2e.*

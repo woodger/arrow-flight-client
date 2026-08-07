@@ -41,7 +41,7 @@
     "build": "tsc",
     "prepack": "tsc",
     "test": "fwa --prune",
-    "lint": "biome lint src",
+    "lint": "oxlint src",
     "generate:proto": "grpc_tools_node_protoc --proto_path=contracts --ts_proto_out=src/generated --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,env=node,esModuleInterop=true contracts/Flight.proto",
     "test:pyarrow": "node --test dist/client/flight-client.pyarrow.e2e.js"
   },
@@ -55,11 +55,11 @@
     "apache-arrow": "^21.1.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.6",
     "@types/node": "^26.0.1",
     "apache-arrow": "^21.1.0",
     "fwa": "^2.1.0",
     "grpc-tools": "1.13.1",
+    "oxlint": "1.77.0",
     "ts-proto": "2.10.1",
     "typescript": "7.0.2"
   }

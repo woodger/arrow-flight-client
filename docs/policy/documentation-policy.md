@@ -36,7 +36,7 @@ Navigation documents must help find the source of truth, not become a second REA
 - compiler settings:
   [`tsconfig.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/tsconfig.json);
 - lint configuration:
-  [`biome.json`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/biome.json);
+  [`.oxlintrc.json`](https://github.com/woodger/arrow-flight-client/blob/main/.oxlintrc.json);
 - observable behavior: tests colocated with source files under `src/`.
 
 `src/generated/Flight.ts` reflects the protobuf generator output. It is a

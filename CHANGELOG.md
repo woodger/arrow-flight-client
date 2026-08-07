@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced Biome with a pinned Oxlint linter while preserving the project lint
+  command and excluding generated bindings.
+
 ## [0.0.12] - 2026-08-03
 
 ### Added
