@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Replaced Biome with a pinned Oxlint linter while preserving the project lint
   command and excluding generated bindings.
+- Added a curated 18-rule type-aware Oxlint profile with a narrow `node:test`
+  registration exception, keeping its semantic backend development-only.
 - Standardized development and CI dependency installs on npm and replaced the
   Yarn Classic lockfile with a committed `package-lock.json`.
 - Aligned TypeScript output with the declared Node.js 16.9 consumer baseline

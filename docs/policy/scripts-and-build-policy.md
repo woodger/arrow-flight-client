@@ -16,10 +16,15 @@ The script contract is defined in [`package.json`](../../package.json):
 - `npm run generate:proto` regenerates TypeScript bindings from `contracts/Flight.proto`;
 - `npm test` runs compiled tests through `fwa --prune`;
 - `npm run test:pyarrow` runs the compiled live PyArrow compatibility suite;
-- `npm run lint` runs Oxlint over the TypeScript sources under `src/`;
+- `npm run lint` runs Oxlint with the curated type-aware TypeScript rules over
+  the sources under `src/`;
 - `prepack` compiles the package before packing or publication.
 
 Tests do not compile source files themselves. After a TypeScript change, run `npm run build` before `npm test`.
+
+Type-aware linting treats `describe` and `test` imported from `node:test` as
+known safe calls. This exception applies only to the test registration calls;
+unhandled promises inside their callbacks remain lint errors.
 
 The PyArrow command also expects an existing build and the pinned Python
 dependency from `test/pyarrow/requirements.txt`. It remains separate so the
