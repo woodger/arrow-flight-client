@@ -7,12 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Included the Apache License 2.0 text and Apache Arrow attribution with the
+  redistributed Flight contract and generated protocol bindings.
+
 ### Changed
 
 - Replaced Biome with a pinned Oxlint linter while preserving the project lint
   command and excluding generated bindings.
 - Standardized development and CI dependency installs on npm and replaced the
   Yarn Classic lockfile with a committed `package-lock.json`.
+- Aligned TypeScript output with the declared Node.js 16.9 consumer baseline
+  and documented the exact Node.js range required by the development tools.
+
+### Fixed
+
+- Deferred streaming-call lifecycle resources until iteration starts so an
+  unused stream no longer retains deadline timers or abort listeners.
 
 ## [0.0.12] - 2026-08-03
 

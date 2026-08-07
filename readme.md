@@ -23,7 +23,8 @@ This is a client library only. It does not implement an Arrow Flight server.
 - `apache-arrow@^21.1.0` as a direct peer dependency;
 - an Arrow Flight server for integration scenarios.
 
-Contributors need Node.js `>=20.19.0` because the development test runner requires it.
+Contributors need Node.js `^20.19.0 || >=22.12.0` because the development
+toolchain requires that range.
 
 ## Installation
 
