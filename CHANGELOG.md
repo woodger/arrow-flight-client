@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.13] - 2026-08-07
+
+### Added
+
+- Included the Apache License 2.0 text and Apache Arrow attribution with the
+  redistributed Flight contract and generated protocol bindings.
+
+### Changed
+
+- Replaced Biome with a pinned Oxlint linter while preserving the project lint
+  command and excluding generated bindings.
+- Added a curated type-aware Oxlint profile with a narrow `node:test`
+  registration exception, keeping its semantic backend development-only.
+- Standardized development and CI dependency installs on npm and replaced the
+  Yarn Classic lockfile with a committed `package-lock.json`.
+- Aligned TypeScript output with the declared Node.js 16.9 consumer baseline
+  and documented the exact Node.js range required by the development tools.
+
+### Fixed
+
+- Deferred streaming-call lifecycle resources until iteration starts so an
+  unused stream no longer retains deadline timers or abort listeners.
+
 ## [0.0.12] - 2026-08-03
 
 ### Added
@@ -196,7 +219,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.12...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.13...HEAD
+[0.0.13]: https://github.com/woodger/arrow-flight-client/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/woodger/arrow-flight-client/compare/v0.0.11...v0.0.12
 [0.0.11]: https://github.com/woodger/arrow-flight-client/compare/f14c512751f452f21903c7896e024282df9b6ab7...v0.0.11
 [0.0.10]: https://github.com/woodger/arrow-flight-client/compare/v0.0.9...f14c512751f452f21903c7896e024282df9b6ab7

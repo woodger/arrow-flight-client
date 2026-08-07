@@ -33,11 +33,13 @@ npm test
 
 The command contract lives in [`package.json`](../../package.json). `fwa --prune` discovers compiled tests, rejects stale source/output pairs, removes stale compiled test artifacts, and delegates execution to `node:test`.
 
-The published client supports the Node.js range declared in `package.json`. Repository development requires Node.js `>=20.19.0` because that is the minimum version supported by `fwa`.
+The published client supports the Node.js range declared in `package.json`.
+Repository development requires Node.js `^20.19.0 || >=22.12.0`, the combined
+supported range of the required development tools.
 
 The live PyArrow compatibility suite is deliberately separate from the unit-test
 command. It requires the pinned dependency in
-[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/test/pyarrow/requirements.txt)
+[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/v0.0.13/test/pyarrow/requirements.txt)
 and runs after compilation with:
 
 ```sh

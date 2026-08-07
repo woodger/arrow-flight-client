@@ -1,12 +1,13 @@
 /**
- * Package entrypoint tests protect the public runtime and type export surface.
+ * Source facade tests protect the public runtime and type export surface.
  *
  * Allowed here:
  * - asserting root-level runtime export names;
  * - compiling imports of root-level type contracts;
- * - verifying namespace wiring at the package boundary.
+ * - verifying namespace wiring at the source module boundary.
  *
- * This file must not repeat behavior tests owned by exported modules.
+ * This file must not verify manifest or filesystem wiring or repeat behavior
+ * tests owned by exported modules.
  */
 
 import assert from 'node:assert/strict';
@@ -74,7 +75,7 @@ const runtimeExportNames = [
   'pathDescriptor'
 ] as const;
 
-describe('package entrypoint', () => {
+describe('source facade', () => {
   test('exposes only the public runtime surface', () => {
     assert.deepStrictEqual(
       Object.keys(packageExports).sort(),

@@ -1,0 +1,9 @@
+Apache Arrow
+Copyright 2016-2026 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+The Apache Arrow Flight protocol definition in contracts/Flight.proto and the
+generated protocol bindings derived from it are licensed under the Apache
+License, Version 2.0. See LICENSE-APACHE-2.0.

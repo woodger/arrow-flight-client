@@ -109,26 +109,15 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightInfo> {
     this.assertOpen();
-    const call = this.prepareCall(options, 'listFlights');
+    const callOptions = snapshotCallOptions(options);
+    const request = { expression: Buffer.from(criteria) };
 
-    try {
-      return mapStream(
-        normalizeStreamErrors(
-          this.client.listFlights(
-            { expression: Buffer.from(criteria) },
-            call.options
-          ),
-          call.ensureActive,
-          call.normalizeError
-        ),
-        decodeFlightInfo,
-        call.dispose
-      );
-    }
-    catch (error) {
-      call.dispose();
-      throw call.normalizeError(error);
-    }
+    return this.createStream(
+      callOptions,
+      'listFlights',
+      (preparedOptions) => this.client.listFlights(request, preparedOptions),
+      decodeFlightInfo
+    );
   }
 
   async getFlightInfo(
@@ -239,7 +228,7 @@ export class FlightClient {
     options: FlightPutOptions = {}
   ): AsyncIterable<FlightPutResult> {
     this.assertOpen();
-    const call = this.prepareCall(options, 'doPut');
+    const callOptions = snapshotCallOptions(options);
     const requests = encodeFlightData(
       encodeDescriptor(descriptor),
       source,
@@ -249,21 +238,12 @@ export class FlightClient {
       }
     );
 
-    try {
-      return mapStream(
-        normalizeStreamErrors(
-          this.client.doPut(requests, call.options),
-          call.ensureActive,
-          call.normalizeError
-        ),
-        (result) => ({ appMetadata: Uint8Array.from(result.appMetadata) }),
-        call.dispose
-      );
-    }
-    catch (error) {
-      call.dispose();
-      throw call.normalizeError(error);
-    }
+    return this.createStream(
+      callOptions,
+      'doPut',
+      (preparedOptions) => this.client.doPut(requests, preparedOptions),
+      (result) => ({ appMetadata: Uint8Array.from(result.appMetadata) })
+    );
   }
 
   async putTable(
@@ -285,46 +265,29 @@ export class FlightClient {
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightActionResult> {
     this.assertOpen();
-    const call = this.prepareCall(options, 'doAction');
+    const callOptions = snapshotCallOptions(options);
+    const request = encodeAction(action);
 
-    try {
-      return mapStream(
-        normalizeStreamErrors(
-          this.client.doAction(encodeAction(action), call.options),
-          call.ensureActive,
-          call.normalizeError
-        ),
-        (result) => ({ body: Uint8Array.from(result.body) }),
-        call.dispose
-      );
-    }
-    catch (error) {
-      call.dispose();
-      throw call.normalizeError(error);
-    }
+    return this.createStream(
+      callOptions,
+      'doAction',
+      (preparedOptions) => this.client.doAction(request, preparedOptions),
+      (result) => ({ body: Uint8Array.from(result.body) })
+    );
   }
 
   listActions(
     options: FlightCallOptions = {}
   ): AsyncIterable<FlightActionType> {
     this.assertOpen();
-    const call = this.prepareCall(options, 'listActions');
+    const callOptions = snapshotCallOptions(options);
 
-    try {
-      return mapStream(
-        normalizeStreamErrors(
-          this.client.listActions({}, call.options),
-          call.ensureActive,
-          call.normalizeError
-        ),
-        ({ type, description }) => ({ type, description }),
-        call.dispose
-      );
-    }
-    catch (error) {
-      call.dispose();
-      throw call.normalizeError(error);
-    }
+    return this.createStream(
+      callOptions,
+      'listActions',
+      (preparedOptions) => this.client.listActions({}, preparedOptions),
+      ({ type, description }) => ({ type, description })
+    );
   }
 
   close(): Promise<void> {
@@ -345,6 +308,36 @@ export class FlightClient {
     if (this.closed) {
       throw new Error('FlightClient is closed');
     }
+  }
+
+  private createStream<TInput, TOutput>(
+    options: FlightCallOptions,
+    methodName: FlightMethodName,
+    createSource: (options: CallOptions) => AsyncIterable<TInput>,
+    map: (value: TInput) => TOutput
+  ): AsyncIterable<TOutput> {
+    return mapStream(
+      () => {
+        this.assertOpen();
+        const call = this.prepareCall(options, methodName);
+
+        try {
+          return {
+            source: normalizeStreamErrors(
+              createSource(call.options),
+              call.ensureActive,
+              call.normalizeError
+            ),
+            dispose: call.dispose
+          };
+        }
+        catch (error) {
+          call.dispose();
+          throw call.normalizeError(error);
+        }
+      },
+      map
+    );
   }
 
   private prepareCall(
@@ -458,6 +451,40 @@ function createMetadata(headers: FlightMetadata): Metadata {
   }
 
   return metadata;
+}
+
+function snapshotCallOptions(options: FlightCallOptions): FlightCallOptions {
+  const deadline = options.deadline;
+  let deadlineSnapshot: Date | undefined;
+
+  if (deadline) {
+    const deadlineTime = deadline.getTime();
+
+    if (!Number.isFinite(deadlineTime)) {
+      throw new RangeError('Flight call deadline must be a valid Date');
+    }
+
+    deadlineSnapshot = new Date(deadlineTime);
+  }
+
+  const metadata = options.metadata
+    ? Object.fromEntries(
+      Object.entries(options.metadata).map(([key, value]) => [
+        key,
+        Array.isArray(value) ? [...value] : value
+      ])
+    ) as FlightMetadata
+    : undefined;
+
+  if (metadata) {
+    createMetadata(metadata);
+  }
+
+  return {
+    ...(metadata ? { metadata } : {}),
+    ...(options.signal ? { signal: options.signal } : {}),
+    ...(deadlineSnapshot ? { deadline: deadlineSnapshot } : {})
+  };
 }
 
 function prepareSignal(
@@ -576,12 +603,18 @@ function normalizeStreamErrors<T>(
 }
 
 function mapStream<TInput, TOutput>(
-  source: AsyncIterable<TInput>,
-  map: (value: TInput) => TOutput,
-  dispose: () => void
+  open: () => {
+    readonly source: AsyncIterable<TInput>
+    readonly dispose: () => void
+  },
+  map: (value: TInput) => TOutput
 ): AsyncIterable<TOutput> {
   return {
     async *[Symbol.asyncIterator]() {
+      // Keep resource acquisition inside the generator body: return() before
+      // the first next() skips this body and must leave no call resources.
+      const { source, dispose } = open();
+
       try {
         for await (const value of source) {
           yield map(value);

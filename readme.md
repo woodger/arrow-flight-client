@@ -23,7 +23,8 @@ This is a client library only. It does not implement an Arrow Flight server.
 - `apache-arrow@^21.1.0` as a direct peer dependency;
 - an Arrow Flight server for integration scenarios.
 
-Contributors need Node.js `>=20.19.0` because the development test runner requires it.
+Contributors need Node.js `^20.19.0 || >=22.12.0` because the development
+toolchain requires that range.
 
 ## Installation
 
@@ -195,10 +196,10 @@ The API boundaries and intentional limitations are described in the
 
 ## Development
 
-Install dependencies from the committed lockfile and run the repository checks:
+Install the locked dependency tree with npm and run the repository checks:
 
 ```sh
-yarn install --frozen-lockfile
+npm ci
 npm run lint
 npm run build
 npm test
@@ -230,7 +231,7 @@ PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).
-[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/src/generated/Flight.ts)
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.13/src/generated/Flight.ts)
 is generated code and must not be edited manually. Development and review
 rules are documented in the
 [project policies](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), and

@@ -29,6 +29,14 @@ This package may include files generated from or otherwise derived from
 third-party protocol buffer contract definitions. Those upstream contract
 definitions remain subject to their own notices.
 
+Apache Arrow Flight protocol
+
+The Apache Arrow Flight protocol definition in contracts/Flight.proto and the
+generated protocol bindings derived from it are licensed under the Apache
+License, Version 2.0. A copy of that license is provided in
+LICENSE-APACHE-2.0, and the required Apache Arrow attribution is provided in
+NOTICE.
+
 Google Protocol Buffers contracts
 
 This package may include artifacts derived from Google Protocol Buffers

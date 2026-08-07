@@ -25,7 +25,8 @@
 - 直接对等依赖 `apache-arrow@^21.1.0`；
 - 集成场景需要 Arrow Flight 服务器。
 
-参与项目开发需要 Node.js `>=20.19.0`，因为开发测试运行器要求该版本。
+参与项目开发需要 Node.js `^20.19.0 || >=22.12.0`，因为项目的开发工具链要求
+使用该版本范围。
 
 ## 安装
 
@@ -188,10 +189,10 @@ API 边界和有意保留的限制记录在
 
 ## 开发
 
-使用已提交的锁文件安装依赖，然后运行仓库检查：
+使用 npm 安装锁定的依赖树，然后运行仓库检查：
 
 ```sh
-yarn install --frozen-lockfile
+npm ci
 npm run lint
 npm run build
 npm test
@@ -221,7 +222,7 @@ PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 
 Flight 协议源文件是
 [`contracts/Flight.proto`](../../contracts/Flight.proto)。
-[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.12/src/generated/Flight.ts)
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.13/src/generated/Flight.ts)
 是生成代码，不应手动编辑。开发和评审规则记录在
 [项目策略](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md)
 中，发布历史记录在 [changelog](../../CHANGELOG.md) 中。

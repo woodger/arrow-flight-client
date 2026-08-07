@@ -51,13 +51,14 @@ describe('FlightClient', () => {
       assert.throws(() => client.listActions(), /closed/);
     });
 
-    test('releases resources for a prepared streaming call', async () => {
+    test('releases resources for an active streaming call', async () => {
       const client = new FlightClient('localhost:1234');
       const controller = new AbortController();
       const actions = client.listActions({
         signal: controller.signal,
         deadline: new Date(Date.now() + 3_000_000_000)
       });
+      const nextAction = actions[Symbol.asyncIterator]().next();
 
       assert.strictEqual(
         getEventListeners(controller.signal, 'abort').length,
@@ -68,7 +69,40 @@ describe('FlightClient', () => {
         getEventListeners(controller.signal, 'abort').length,
         0
       );
-      void actions;
+      await assert.rejects(nextAction);
+    });
+  });
+
+  describe('#listActions', () => {
+    test('does not prepare resources before iteration', async () => {
+      const client = new FlightClient('localhost:1234');
+      const controller = new AbortController();
+      const actions = client.listActions({
+        signal: controller.signal,
+        deadline: new Date(Date.now() + 3_000_000_000)
+      });
+      const iterator = actions[Symbol.asyncIterator]();
+
+      assert.strictEqual(
+        getEventListeners(controller.signal, 'abort').length,
+        0
+      );
+      await iterator.return?.(undefined);
+      assert.strictEqual(
+        getEventListeners(controller.signal, 'abort').length,
+        0
+      );
+      await client.close();
+    });
+
+    test('rejects an invalid deadline before iteration', async () => {
+      const client = new FlightClient('localhost:1234');
+
+      assert.throws(
+        () => client.listActions({ deadline: new Date(Number.NaN) }),
+        /deadline must be a valid Date/
+      );
+      await client.close();
     });
   });
 });
