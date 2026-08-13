@@ -42,8 +42,8 @@
     "prepack": "tsc",
     "test": "fwa --prune",
     "lint": "oxlint src",
-    "generate:proto": "grpc_tools_node_protoc --proto_path=contracts --ts_proto_out=src/generated --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,env=node,esModuleInterop=true contracts/Flight.proto",
-    "test:pyarrow": "node --test dist/client/flight-client.pyarrow.e2e.js"
+    "generate:proto": "node src/cli/index.mjs generate proto",
+    "test:pyarrow": "node src/cli/index.mjs test pyarrow"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.1",

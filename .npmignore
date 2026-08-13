@@ -3,6 +3,7 @@ node_modules/
 docs/policy/
 test/
 src/
+dist/cli/
 dist/raw.*
 tsconfig.json
 .oxlintrc.json

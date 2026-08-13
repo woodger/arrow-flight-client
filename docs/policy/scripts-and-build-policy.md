@@ -20,6 +20,12 @@ The script contract is defined in [`package.json`](../../package.json):
   the sources under `src/`;
 - `prepack` compiles the package before packing or publication.
 
+The protobuf and PyArrow commands delegate to `src/cli/index.mjs`. This
+repository-only CLI is executable before compilation so protobuf generation
+does not depend on stale build output. It accepts only the fixed contributor
+command paths, runs project-local tools without a shell, and preserves their
+terminal output and exit status. It is not a consumer package entrypoint.
+
 Tests do not compile source files themselves. After a TypeScript change, run `npm run build` before `npm test`.
 
 Type-aware linting treats `describe` and `test` imported from `node:test` as
