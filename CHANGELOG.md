@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   baseline and updated Oxlint to 1.78.0 and Fwa to 2.1.4.
 - Moved protobuf generation and the live PyArrow test launcher behind a
   dependency-free repository CLI while preserving their npm command names.
+- Excluded project-local Python virtual environments from version control and
+  npm package contents.
 
 ## [0.0.13] - 2026-08-07
 

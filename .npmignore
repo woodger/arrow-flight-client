@@ -1,4 +1,5 @@
 node_modules/
+.venv/
 .github/
 docs/policy/
 test/
