@@ -6,11 +6,11 @@
 
 包入口映射由 [`package.json`](../../package.json) 定义。根源码导出面以及经过
 筛选的底层协议命名空间分别由
-[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.14/src/index.ts)
+[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/index.ts)
 和
-[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.14/src/flight-protocol.ts)
+[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/flight-protocol.ts)
 定义。可观察的数据流行为由与
-[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.14/src/client)
+[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.15/src/client)
 源码放置在一起的测试保护，而传输合约仍由
 [`contracts/Flight.proto`](../../contracts/Flight.proto) 定义。
 
