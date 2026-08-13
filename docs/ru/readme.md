@@ -213,14 +213,21 @@ npm run build
 npm test
 ```
 
-После изменения `contracts/Flight.proto` заново сгенерируйте привязки:
+Перед изменением `contracts/Flight.proto` соберите репозиторный CLI:
+
+```sh
+npm run build
+```
+
+После изменения контракта заново сгенерируйте привязки и повторите сборку:
 
 ```sh
 npm run generate:proto
+npm run build
 ```
 
-Команда использует закреплённые в проекте генератор `ts-proto` и компилятор
-`grpc-tools`.
+Команда генерации использует скомпилированный репозиторный CLI, закреплённый в
+проекте генератор `ts-proto` и компилятор `grpc-tools`.
 
 Тесты запускаются над скомпилированным JavaScript, поэтому после изменения
 исходников TypeScript выполните `npm run build` перед `npm test`. При публикации
@@ -240,7 +247,7 @@ PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 
 Исходный Flight-контракт находится в
 [`contracts/Flight.proto`](../../contracts/Flight.proto).
-[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.14/src/generated/Flight.ts)
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/generated/Flight.ts)
 является сгенерированным кодом и не должен редактироваться вручную. Правила
 разработки и ревью описаны в
 [политиках проекта](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md),

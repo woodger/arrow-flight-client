@@ -1,6 +1,6 @@
 {
   "name": "arrow-flight-client",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Apache Arrow Flight Client for Node.js",
   "keywords": [
     "apache-arrow",
@@ -42,8 +42,8 @@
     "prepack": "tsc",
     "test": "fwa --prune",
     "lint": "oxlint src",
-    "generate:proto": "node src/cli/index.mjs generate proto",
-    "test:pyarrow": "node src/cli/index.mjs test pyarrow"
+    "generate:proto": "node dist/cli/index.js generate proto",
+    "test:pyarrow": "node dist/cli/index.js test pyarrow"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.1",

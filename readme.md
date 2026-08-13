@@ -205,14 +205,21 @@ npm run build
 npm test
 ```
 
-After changing `contracts/Flight.proto`, regenerate the bindings:
+Build the repository CLI before changing `contracts/Flight.proto`:
+
+```sh
+npm run build
+```
+
+After changing the contract, regenerate the bindings and rebuild:
 
 ```sh
 npm run generate:proto
+npm run build
 ```
 
-The command uses the pinned project-local `ts-proto` generator and `grpc-tools`
-compiler.
+The generation command uses the compiled repository CLI, the pinned
+project-local `ts-proto` generator, and the `grpc-tools` compiler.
 
 Tests run against compiled JavaScript, so run `npm run build` before `npm test`
 after changing TypeScript sources. Package publication invokes the build through
@@ -231,7 +238,7 @@ PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).
-[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.14/src/generated/Flight.ts)
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/generated/Flight.ts)
 is generated code and must not be edited manually. Development and review
 rules are documented in the
 [project policies](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), and
