@@ -11,12 +11,20 @@
 
 import type { ClientMiddleware, CallOptions } from 'nice-grpc';
 import { Metadata } from 'nice-grpc-common';
-import type { FlightMetadata } from './types';
+import type { FlightMetadata, FlightMetadataValue } from './types';
 
 const metadataOverrideKeys = Symbol('metadataOverrideKeys');
 
 interface FlightMetadataCallOptions extends CallOptions {
   [metadataOverrideKeys]?: readonly string[]
+}
+
+// Array.isArray widens readonly arrays to any[]; keep the public metadata
+// element type explicit at this standard-library boundary.
+export function isRepeatedMetadataValue(
+  value: FlightMetadataValue | readonly FlightMetadataValue[]
+): value is readonly FlightMetadataValue[] {
+  return Array.isArray(value);
 }
 
 export function metadataMiddleware(headers: FlightMetadata): ClientMiddleware {
@@ -27,7 +35,9 @@ export function metadataMiddleware(headers: FlightMetadata): ClientMiddleware {
     ] ?? [];
 
     for (const [key, value] of Object.entries(headers)) {
-      const values = Array.isArray(value) ? [...value] : [value];
+      const values = isRepeatedMetadataValue(value)
+        ? [...value]
+        : [value];
 
       for (const item of values) {
         metadata.append(key, item);

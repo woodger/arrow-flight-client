@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Aligned the curated Oxlint configuration with the project-audited reference
+  baseline and updated Oxlint to 1.78.0 and Fwa to 2.1.4.
+
 ## [0.0.13] - 2026-08-07
 
 ### Added

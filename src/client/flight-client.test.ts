@@ -28,6 +28,8 @@ describe('FlightClient', () => {
     test('returns the raw generated client', async () => {
       const client = new FlightClient('localhost:1234');
 
+      // The deprecated alias remains a supported compatibility contract.
+      // oxlint-disable-next-line typescript/no-deprecated
       assert.strictEqual(client.grpc, client.raw);
       await client.close();
     });

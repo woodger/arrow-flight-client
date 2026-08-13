@@ -167,7 +167,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
         reader = outcome.reader;
       }
 
-      const openedReader = reader;
+      const openedReader = reader[Symbol.asyncIterator]();
       const readNext = () => {
         const next = Promise.resolve(openedReader.next());
         const outcome = next.then(

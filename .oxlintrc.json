@@ -9,10 +9,6 @@
 		"style": "off",
 		"suspicious": "off"
 	},
-	"env": {
-		"builtin": true,
-		"node": true
-	},
 	"plugins": ["eslint", "typescript", "import"],
 	"ignorePatterns": ["src/generated/**"],
 	"options": {
@@ -33,9 +29,7 @@
 		"eslint/no-duplicate-case": "error",
 		"eslint/no-empty": "error",
 		"eslint/no-empty-character-class": "error",
-		"eslint/no-empty-function": "error",
 		"eslint/no-empty-pattern": "error",
-		"eslint/no-empty-static-block": "error",
 		"eslint/no-ex-assign": "error",
 		"eslint/no-extra-boolean-cast": "error",
 		"eslint/no-fallthrough": "error",
@@ -43,7 +37,6 @@
 		"eslint/no-irregular-whitespace": "error",
 		"eslint/no-loss-of-precision": "error",
 		"eslint/no-misleading-character-class": "error",
-		"eslint/no-multi-assign": "error",
 		"eslint/no-nonoctal-decimal-escape": "error",
 		"eslint/no-prototype-builtins": "error",
 		"eslint/no-regex-spaces": "error",
@@ -61,11 +54,7 @@
 			{
 				"args": "all",
 				"argsIgnorePattern": "^_",
-				"caughtErrors": "all",
-				"caughtErrorsIgnorePattern": "^_",
-				"ignoreRestSiblings": true,
-				"vars": "all",
-				"varsIgnorePattern": "^_"
+				"ignoreRestSiblings": true
 			}
 		],
 		"eslint/no-useless-backreference": "error",
@@ -78,7 +67,12 @@
 		"eslint/require-yield": "error",
 		"eslint/use-isnan": "error",
 		"eslint/valid-typeof": "error",
-		"import/no-commonjs": "error",
+		"import/no-commonjs": [
+			"error",
+			{
+				"allowConditionalRequire": false
+			}
+		],
 		"typescript/await-thenable": "error",
 		"typescript/ban-ts-comment": [
 			"error",
@@ -91,6 +85,7 @@
 		],
 		"typescript/no-array-delete": "error",
 		"typescript/no-base-to-string": "error",
+		"typescript/no-deprecated": "error",
 		"typescript/no-duplicate-enum-values": "error",
 		"typescript/no-empty-object-type": "error",
 		"typescript/no-explicit-any": "error",
@@ -112,16 +107,19 @@
 		"typescript/no-misused-promises": "error",
 		"typescript/no-misused-new": "error",
 		"typescript/no-misused-spread": "error",
+		"typescript/no-mixed-enums": "error",
 		"typescript/no-namespace": "error",
 		"typescript/no-non-null-asserted-optional-chain": "error",
 		"typescript/no-require-imports": "error",
 		"typescript/no-this-alias": "error",
 		"typescript/no-unnecessary-type-constraint": "error",
+		"typescript/no-unsafe-argument": "error",
+		"typescript/no-unsafe-assignment": "error",
 		"typescript/no-unsafe-declaration-merging": "error",
 		"typescript/no-unsafe-enum-comparison": "error",
 		"typescript/no-unsafe-function-type": "error",
+		"typescript/no-unsafe-return": "error",
 		"typescript/no-unsafe-unary-minus": "error",
-		"typescript/no-var-requires": "error",
 		"typescript/no-wrapper-object-types": "error",
 		"typescript/only-throw-error": "error",
 		"typescript/prefer-as-const": "error",
@@ -129,8 +127,17 @@
 		"typescript/prefer-promise-reject-errors": "error",
 		"typescript/require-array-sort-compare": "error",
 		"typescript/restrict-plus-operands": "error",
-		"typescript/restrict-template-expressions": "error",
-		"typescript/return-await": "error",
+		"typescript/restrict-template-expressions": [
+			"error",
+			{
+				"allowAny": false
+			}
+		],
+		"typescript/return-await": [
+			"error",
+			"error-handling-correctness-only"
+		],
+		"typescript/switch-exhaustiveness-check": "error",
 		"typescript/use-unknown-in-catch-callback-variable": "error"
 	}
 }

@@ -27,6 +27,7 @@ import { createFlightStreamReader } from './flight-stream-reader';
 import type { FlightStreamReader } from './flight-stream-reader';
 import { encodeFlightData } from './ipc';
 import {
+  isRepeatedMetadataValue,
   metadataMiddleware,
   setMetadataOverrideKeys
 } from './metadata-middleware';
@@ -443,7 +444,9 @@ function createMetadata(headers: FlightMetadata): Metadata {
   const metadata = new Metadata();
 
   for (const [key, value] of Object.entries(headers)) {
-    const values = Array.isArray(value) ? value : [value];
+    const values = isRepeatedMetadataValue(value)
+      ? value
+      : [value];
 
     for (const item of values) {
       metadata.append(key, item);
@@ -471,7 +474,9 @@ function snapshotCallOptions(options: FlightCallOptions): FlightCallOptions {
     ? Object.fromEntries(
       Object.entries(options.metadata).map(([key, value]) => [
         key,
-        Array.isArray(value) ? [...value] : value
+        isRepeatedMetadataValue(value)
+          ? [...value]
+          : value
       ])
     ) as FlightMetadata
     : undefined;
