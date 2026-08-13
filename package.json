@@ -1,6 +1,6 @@
 {
   "name": "arrow-flight-client",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Apache Arrow Flight Client for Node.js",
   "keywords": [
     "apache-arrow",
@@ -42,8 +42,8 @@
     "prepack": "tsc",
     "test": "fwa --prune",
     "lint": "oxlint src",
-    "generate:proto": "grpc_tools_node_protoc --proto_path=contracts --ts_proto_out=src/generated --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false,env=node,esModuleInterop=true contracts/Flight.proto",
-    "test:pyarrow": "node --test dist/client/flight-client.pyarrow.e2e.js"
+    "generate:proto": "node src/cli/index.mjs generate proto",
+    "test:pyarrow": "node src/cli/index.mjs test pyarrow"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.1",
@@ -57,9 +57,9 @@
   "devDependencies": {
     "@types/node": "^26.0.1",
     "apache-arrow": "^21.1.0",
-    "fwa": "^2.1.3",
+    "fwa": "^2.1.4",
     "grpc-tools": "1.13.1",
-    "oxlint": "1.77.0",
+    "oxlint": "1.78.0",
     "oxlint-tsgolint": "^7.0.2001",
     "ts-proto": "2.10.1",
     "typescript": "7.0.2"
