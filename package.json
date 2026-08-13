@@ -1,6 +1,6 @@
 {
   "name": "arrow-flight-client",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Apache Arrow Flight Client for Node.js",
   "keywords": [
     "apache-arrow",

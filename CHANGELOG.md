@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.14] - 2026-08-13
+
 ### Changed
 
 - Aligned the curated Oxlint configuration with the project-audited reference
@@ -226,7 +228,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.13...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.14...HEAD
+[0.0.14]: https://github.com/woodger/arrow-flight-client/compare/v0.0.13...v0.0.14
 [0.0.13]: https://github.com/woodger/arrow-flight-client/compare/v0.0.12...v0.0.13
 [0.0.12]: https://github.com/woodger/arrow-flight-client/compare/v0.0.11...v0.0.12
 [0.0.11]: https://github.com/woodger/arrow-flight-client/compare/f14c512751f452f21903c7896e024282df9b6ab7...v0.0.11
