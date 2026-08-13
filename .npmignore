@@ -1,11 +1,9 @@
 node_modules/
 .venv/
-.github/
 docs/policy/
 test/
 src/
 dist/cli/
-dist/raw.*
 tsconfig.json
 .oxlintrc.json
 **/*.test.*

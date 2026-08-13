@@ -198,13 +198,21 @@ npm run build
 npm test
 ```
 
-修改 `contracts/Flight.proto` 后，请重新生成绑定：
+修改 `contracts/Flight.proto` 前，请先构建仓库 CLI：
+
+```sh
+npm run build
+```
+
+修改合约后，请重新生成绑定并再次构建：
 
 ```sh
 npm run generate:proto
+npm run build
 ```
 
-该命令使用项目中固定版本的 `ts-proto` 生成器和 `grpc-tools` 编译器。
+生成命令使用已编译的仓库 CLI，以及项目中固定版本的 `ts-proto` 生成器和
+`grpc-tools` 编译器。
 
 测试针对编译后的 JavaScript 运行，因此修改 TypeScript 源文件后，应先执行
 `npm run build` 再执行 `npm test`。发布包时会通过 `prepack` 触发构建。

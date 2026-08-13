@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * The repository CLI dispatches contributor commands without requiring a build.
+ * The compiled repository CLI dispatches contributor commands.
  *
  * Allowed here:
  * - resolving the fixed repository command paths;
@@ -14,23 +14,17 @@
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { constants as osConstants } from 'node:os';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
-const cliPath = fileURLToPath(import.meta.url);
-const projectRoot = resolve(dirname(cliPath), '../..');
-const requireFromCli = createRequire(import.meta.url);
+const projectRoot = resolve(__dirname, '../..');
+const requireFromCli = createRequire(__filename);
 const usage = [
   'Usage:',
-  '  node src/cli/index.mjs generate proto',
-  '  node src/cli/index.mjs test pyarrow'
+  '  node dist/cli/index.js generate proto',
+  '  node dist/cli/index.js test pyarrow'
 ].join('\n');
 
-/**
- * @param {readonly string[]} args
- * @returns {Promise<number>}
- */
-async function runCli(args) {
+async function runCli(args: readonly string[]): Promise<number> {
   const command = args.join(' ');
 
   switch (command) {
@@ -58,23 +52,18 @@ async function runCli(args) {
   }
 }
 
-/**
- * @param {string} executable
- * @param {readonly string[]} args
- * @returns {Promise<number>}
- */
-function runProcess(executable, args) {
+function runProcess(
+  executable: string,
+  args: readonly string[]
+): Promise<number> {
   return new Promise((resolveExitCode, rejectProcess) => {
     const child = spawn(executable, args, {
       cwd: projectRoot,
       shell: false,
       stdio: 'inherit'
     });
-    /** @type {Map<NodeJS.Signals, () => void>} */
-    const signalHandlers = new Map();
-
-    /** @type {readonly NodeJS.Signals[]} */
-    const forwardedSignals = ['SIGINT', 'SIGTERM'];
+    const signalHandlers = new Map<NodeJS.Signals, () => void>();
+    const forwardedSignals: readonly NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
 
     for (const signal of forwardedSignals) {
       const forwardSignal = () => {
@@ -102,17 +91,13 @@ function runProcess(executable, args) {
   });
 }
 
-/**
- * @param {NodeJS.Signals} signal
- * @returns {number}
- */
-function signalExitCode(signal) {
+function signalExitCode(signal: NodeJS.Signals): number {
   const signalNumber = osConstants.signals[signal];
 
   return typeof signalNumber === 'number' ? 128 + signalNumber : 1;
 }
 
-async function main() {
+async function main(): Promise<void> {
   try {
     process.exitCode = await runCli(process.argv.slice(2));
   }

@@ -205,14 +205,21 @@ npm run build
 npm test
 ```
 
-After changing `contracts/Flight.proto`, regenerate the bindings:
+Build the repository CLI before changing `contracts/Flight.proto`:
+
+```sh
+npm run build
+```
+
+After changing the contract, regenerate the bindings and rebuild:
 
 ```sh
 npm run generate:proto
+npm run build
 ```
 
-The command uses the pinned project-local `ts-proto` generator and `grpc-tools`
-compiler.
+The generation command uses the compiled repository CLI, the pinned
+project-local `ts-proto` generator, and the `grpc-tools` compiler.
 
 Tests run against compiled JavaScript, so run `npm run build` before `npm test`
 after changing TypeScript sources. Package publication invokes the build through

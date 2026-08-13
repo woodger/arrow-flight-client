@@ -15,8 +15,6 @@
 
     "declaration": true,
     "noEmitOnError": true,
-    "allowJs": true,
-    "checkJs": true,
 
     "strict": true,
     "exactOptionalPropertyTypes": true,
@@ -34,8 +32,7 @@
     "skipLibCheck": false
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.mjs"
+    "src/**/*.ts"
   ],
   "exclude": [
     "dist",

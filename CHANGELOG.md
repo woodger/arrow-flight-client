@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Reimplemented the repository CLI in TypeScript and made its contributor
+  commands run the compiled entrypoint after an explicit project build.
+
 ## [0.0.14] - 2026-08-13
 
 ### Changed
