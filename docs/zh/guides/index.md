@@ -181,10 +181,6 @@ Arrow IPC 帧处理由调用方负责。
 
 ## 读取错误详情
 
-> **Unreleased:** 此示例使用 `FlightCallOptions.onTrailer` 和
-> `FlightResponseMetadata`，它们在 `arrow-flight-client@0.0.15` 中不可用。
-> 请参阅[更新日志](../../../CHANGELOG.md#unreleased)。
-
 使用 `FlightCallOptions.onTrailer` 保存调用的尾随元数据，包括调用失败时的
 元数据。PyArrow 的 gRPC 传输层将 `FlightError.extra_info` 作为不透明字节放在
 `grpc-status-details-bin` 中，具体可参见

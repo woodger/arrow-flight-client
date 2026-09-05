@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.16] - 2026-09-05
+
 ### Changed
 
-- Clarified unreleased API availability and stream-reader cleanup in the English,
+- Clarified response metadata availability and stream-reader cleanup in the English,
   Russian, and Simplified Chinese guides.
 - Updated the protobuf runtime and contributor tooling, and regenerated Flight
   bindings with `ts-proto` 2.12.1. Protocol JSON readers now also accept the
@@ -256,7 +258,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.15...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.16...HEAD
+[0.0.16]: https://github.com/woodger/arrow-flight-client/compare/v0.0.15...v0.0.16
 [0.0.15]: https://github.com/woodger/arrow-flight-client/compare/v0.0.14...v0.0.15
 [0.0.14]: https://github.com/woodger/arrow-flight-client/compare/v0.0.13...v0.0.14
 [0.0.13]: https://github.com/woodger/arrow-flight-client/compare/v0.0.12...v0.0.13

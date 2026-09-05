@@ -190,10 +190,6 @@ main().catch(console.error);
 
 ## Чтение деталей ошибки
 
-> **Unreleased:** В примере используются `FlightCallOptions.onTrailer` и
-> `FlightResponseMetadata`, которых нет в `arrow-flight-client@0.0.15`.
-> См. [changelog](../../../CHANGELOG.md#unreleased).
-
 Используйте `FlightCallOptions.onTrailer`, чтобы сохранить trailing metadata
 вызова, в том числе завершившегося ошибкой. gRPC-транспорт PyArrow передаёт
 `FlightError.extra_info` как непрозрачные байты в `grpc-status-details-bin`, что

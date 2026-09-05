@@ -187,10 +187,6 @@ The caller owns raw `DoExchange` Arrow IPC framing.
 
 ## Read Error Details
 
-> **Unreleased:** This example uses `FlightCallOptions.onTrailer` and
-> `FlightResponseMetadata`, which are not available in `arrow-flight-client@0.0.15`.
-> See the [changelog](../../CHANGELOG.md#unreleased).
-
 Use `FlightCallOptions.onTrailer` to retain trailing metadata for a call,
 including when it fails. PyArrow's gRPC transport sends `FlightError.extra_info`
 as opaque bytes in `grpc-status-details-bin`, as shown in the

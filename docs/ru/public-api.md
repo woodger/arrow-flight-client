@@ -8,11 +8,11 @@
 Карта точек входа пакета определяется в [`package.json`](../../package.json).
 Корневая поверхность исходного кода и отобранное пространство имён
 низкоуровневого протокола определяются в
-[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/index.ts)
+[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.16/src/index.ts)
 и
-[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/flight-protocol.ts).
+[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.16/src/flight-protocol.ts).
 Наблюдаемое поведение потоков защищено тестами, расположенными рядом с кодом в
-[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.15/src/client),
+[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.16/src/client),
 а контракт передачи данных остаётся в
 [`contracts/Flight.proto`](../../contracts/Flight.proto).
 
@@ -121,7 +121,7 @@ IPC-адаптер сохраняет заданные вызывающим ко
 `deadline` высокоуровневого вызова возвращает `ClientError` из `nice-grpc` с кодом
 `DEADLINE_EXCEEDED`.
 
-`FlightCallOptions.onTrailer` (`Unreleased`) предоставляет полученные trailing
+`FlightCallOptions.onTrailer` предоставляет полученные trailing
 metadata, в том числе для завершившихся ошибкой вызовов, в типе проекта
 `FlightResponseMetadata`. Значения представлены массивами строк или копий
 `Uint8Array`. Транспортные ошибки сохраняют прежний тип `ClientError`, `code` и
