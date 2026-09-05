@@ -59,6 +59,28 @@ describe('Flight protocol facade', () => {
     assert.strictEqual(decoded.payload.toString(), 'credentials');
   });
 
+  test('preserves special session option keys when decoding JSON', () => {
+    const message = flightProtocol.GetSessionOptionsResult.fromJSON(
+      JSON.parse('{"sessionOptions":{"__proto__":{"stringValue":"value"}}}') as unknown
+    );
+
+    assert.deepStrictEqual(Object.keys(message.sessionOptions), ['__proto__']);
+    assert.strictEqual(message.sessionOptions['__proto__']?.stringValue, 'value');
+    assert.strictEqual(Object.getPrototypeOf(message.sessionOptions), Object.prototype);
+  });
+
+  test('accepts protocol field names when decoding JSON', () => {
+    const message = flightProtocol.FlightData.fromJSON({
+      data_header: Buffer.from('header').toString('base64'),
+      app_metadata: Buffer.from('metadata').toString('base64'),
+      data_body: Buffer.from('body').toString('base64')
+    });
+
+    assert.strictEqual(message.dataHeader.toString(), 'header');
+    assert.strictEqual(message.appMetadata.toString(), 'metadata');
+    assert.strictEqual(message.dataBody.toString(), 'body');
+  });
+
   test('exports the raw metadata constructor', () => {
     const metadata = flightProtocol.RawMetadata({
       authorization: 'Bearer token'

@@ -78,7 +78,8 @@ main().catch(console.error);
 ## Потоковая обработка RecordBatch
 
 Используйте `doGet()`, когда ответ нужно обрабатывать последовательно, а не
-собирать в одну таблицу:
+собирать в одну таблицу. Этот пример останавливается после первого RecordBatch;
+выход из цикла `for await` через `break` закрывает reader:
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -99,6 +100,7 @@ async function main() {
       for await (const chunk of reader) {
         if (chunk.data) {
           console.log('Batch rows:', chunk.data.numRows);
+          break;
         }
       }
 
@@ -114,6 +116,37 @@ async function main() {
 
 main().catch(console.error);
 ```
+
+Каждый `FlightStreamReader` допускает однократное чтение: используйте один цикл
+`for await` или один вызов `readAll()`. Повторное чтение, в том числе после
+`break` или `cancel()`, завершается ошибкой. Для нового чтения снова вызовите
+`doGet(ticket)`.
+
+Если reader открыт только для просмотра схемы и итерация не начинается,
+освободите поток с помощью `cancel()`:
+
+```ts
+import type { FlightClient, FlightTicket } from 'arrow-flight-client';
+
+export async function inspectSchema(client: FlightClient, ticket: FlightTicket) {
+  const reader = await client.doGet(ticket);
+
+  try {
+    console.log(reader.schema);
+  }
+  finally {
+    await reader.cancel();
+  }
+}
+```
+
+`cancel()` можно вызвать и после начала итерации: он прерывает ожидающее чтение
+`DoGet`, которое отклоняется с `AbortError`, и завершается после освобождения
+ресурсов потока. Выход из цикла `for await` через `break` использует тот же путь
+очистки, но не выдаёт ошибку отмены.
+
+Вызывающий код по-прежнему владеет клиентом и закрывает его через `client.close()`
+после завершения всех вызовов, как в предыдущем примере.
 
 ## Отправка таблицы
 
@@ -154,3 +187,49 @@ main().catch(console.error);
 соответствующие отобранные сообщения и кодеки — через корневое пространство имён
 `flightProtocol`. Вызывающий код самостоятельно отвечает за фрейминг Arrow IPC
 низкоуровневых вызовов `DoExchange`.
+
+## Чтение деталей ошибки
+
+Используйте `FlightCallOptions.onTrailer`, чтобы сохранить trailing metadata
+вызова, в том числе завершившегося ошибкой. gRPC-транспорт PyArrow передаёт
+`FlightError.extra_info` как непрозрачные байты в `grpc-status-details-bin`, что
+видно в [реализации транспорта Arrow](https://github.com/apache/arrow/blob/apache-arrow-24.0.0/cpp/src/arrow/flight/transport/grpc/util_internal.cc#L297).
+Callback получает массивы текстовых или бинарных значений и не должен бросать
+исключения. Сохраните в нём trailers, а содержимое разбирайте при обработке ошибки:
+
+```ts
+import { FlightClient, pathDescriptor } from 'arrow-flight-client';
+import type { FlightResponseMetadata } from 'arrow-flight-client';
+
+async function main() {
+  const client = new FlightClient('localhost:8815');
+  let trailer: FlightResponseMetadata | undefined;
+
+  try {
+    await client.getFlightInfo(pathDescriptor('model'), {
+      onTrailer: (metadata) => { trailer = metadata; }
+    });
+  }
+  catch (error) {
+    const extraInfo = trailer?.['grpc-status-details-bin']?.[0];
+
+    if (extraInfo instanceof Uint8Array) {
+      console.error('Flight extra_info:', Buffer.from(extraInfo).toString('utf8'));
+    }
+
+    throw error;
+  }
+  finally {
+    await client.close();
+  }
+}
+
+main().catch(console.error);
+```
+
+В этом примере предполагается, что сервер использует текст UTF-8. Если содержимое
+представлено JSON, разбирайте и проверяйте его согласно прикладному контракту
+сервера. Клиент сохраняет байты и прежние `code` и `details` ошибки.
+Та же опция доступна для потоковых вызовов и `getTable()` / `putTable()`;
+trailers приходят при завершении RPC, а не при первоначальном открытии reader.
+При сбое до ответа сервера trailers от сервера могут отсутствовать.

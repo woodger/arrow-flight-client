@@ -7,11 +7,11 @@ English | [Русский](ru/public-api.md) | [简体中文](zh/public-api.md)
 
 The package entrypoint map is defined by [`package.json`](../package.json). The
 root source surface and its curated low-level protocol namespace are
-[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/index.ts)
+[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.16/src/index.ts)
 and
-[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/flight-protocol.ts).
+[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.16/src/flight-protocol.ts).
 Observable stream behavior is protected by tests colocated with
-[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.15/src/client),
+[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.16/src/client),
 while the wire contract remains
 [`contracts/Flight.proto`](../contracts/Flight.proto).
 
@@ -78,7 +78,9 @@ Flight response streams remain `AsyncIterable` values. `listFlights()`,
 `doPut()`, `doAction()`, and `listActions()` do not collect responses. `doGet()`
 returns a single-use `FlightStreamReader` so a record batch and its
 application metadata remain associated and metadata-only messages are not
-discarded.
+discarded. `FlightStreamReader.cancel()` aborts an active `DoGet` and resolves
+after its stream resources are released. An in-progress read rejects with
+`AbortError`.
 
 Collection is explicit: `getTable()` creates a complete Arrow `Table`, and
 `putTable()` collects all server `PutResult` messages.
@@ -109,6 +111,14 @@ array removes a configured key for that call. High-level calls
 support an `AbortSignal` and an absolute `Date` deadline. Caller cancellation
 rejects with `AbortError`; high-level deadline expiry rejects with a nice-grpc
 `ClientError` whose code is `DEADLINE_EXCEEDED`.
+
+`FlightCallOptions.onTrailer` exposes received trailing metadata,
+including for failed calls, as project-owned `FlightResponseMetadata`. Values
+are arrays of strings or copied `Uint8Array` values. Transport errors retain
+their existing `ClientError` type, `code`, and `details`. See the
+[error detail example](./guides/index.md#read-error-details) for accessing
+PyArrow `FlightError.extra_info` without decoding application payloads in the
+transport layer.
 
 TLS uses platform roots by default and accepts custom roots plus an optional
 mutual-TLS identity. A private key and certificate chain form one identity and

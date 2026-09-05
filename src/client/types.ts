@@ -18,6 +18,11 @@ export type FlightMetadata = Readonly<Record<
   FlightMetadataValue | readonly FlightMetadataValue[]
 >>;
 
+export type FlightResponseMetadata = Readonly<Record<
+  string,
+  readonly FlightMetadataValue[]
+>>;
+
 export interface FlightTlsOptions {
   rootCertificates?: Uint8Array
   privateKey?: Uint8Array
@@ -37,6 +42,8 @@ export interface FlightCallOptions {
   metadata?: FlightMetadata
   signal?: AbortSignal
   deadline?: Date
+  /** Called when trailing metadata arrives, including for failed calls. */
+  onTrailer?(trailer: FlightResponseMetadata): void
 }
 
 export interface FlightPathDescriptor {

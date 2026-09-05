@@ -8,3 +8,4 @@ tsconfig.json
 .oxlintrc.json
 **/*.test.*
 **/*.e2e.*
+MR.md

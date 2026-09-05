@@ -6,7 +6,9 @@ import { createInterface } from 'node:readline';
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { tableFromArrays } from 'apache-arrow';
+import { ClientError, Status } from 'nice-grpc';
 import { FlightClient, pathDescriptor } from '../index';
+import type { FlightResponseMetadata } from '../index';
 
 interface RunningServer {
   readonly address: string
@@ -49,6 +51,42 @@ describe('FlightClient PyArrow compatibility', () => {
       }
 
       assert.deepStrictEqual(results, ['Bearer configured']);
+    }
+    finally {
+      await client.close();
+    }
+  });
+
+  test('exposes FlightError extra_info through trailing metadata', async () => {
+    assert.ok(server);
+    const client = new FlightClient(server.address);
+    const trailers: FlightResponseMetadata[] = [];
+
+    try {
+      await assert.rejects(
+        client.getFlightInfo(pathDescriptor('model-schema-mismatch'), {
+          onTrailer: (trailer) => { trailers.push(trailer); }
+        }),
+        (error: unknown) => {
+          assert.ok(error instanceof ClientError);
+          assert.strictEqual(error.code, Status.INTERNAL);
+          assert.ok(error.details.includes('Model schema mismatch'));
+          assert.strictEqual(trailers.length, 1);
+          const extraInfo = trailers[0]?.['grpc-status-details-bin']?.[0];
+          assert.ok(extraInfo instanceof Uint8Array);
+          assert.deepStrictEqual(
+            JSON.parse(Buffer.from(extraInfo).toString('utf8')) as unknown,
+            {
+              code: 'MODEL_SCHEMA_MISMATCH',
+              reason: 'DIGEST_MISMATCH',
+              layer: 'target',
+              expectedSha256: 'a'.repeat(64),
+              actualSha256: 'b'.repeat(64)
+            }
+          );
+          return true;
+        }
+      );
     }
     finally {
       await client.close();

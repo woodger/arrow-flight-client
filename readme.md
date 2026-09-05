@@ -87,7 +87,9 @@ for await (const chunk of reader) {
 ```
 
 Use `getTable()` when collecting the complete stream into an Arrow `Table` is
-intentional.
+intentional. Calling `reader.cancel()` aborts an active `DoGet` and resolves
+after its stream resources are released; an in-progress read rejects with
+`AbortError`.
 
 ## DoPut
 
@@ -238,7 +240,7 @@ PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
 The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto).
-[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/generated/Flight.ts)
+[`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.16/src/generated/Flight.ts)
 is generated code and must not be edited manually. Development and review
 rules are documented in the
 [project policies](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), and

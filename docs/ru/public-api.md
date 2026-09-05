@@ -8,11 +8,11 @@
 Карта точек входа пакета определяется в [`package.json`](../../package.json).
 Корневая поверхность исходного кода и отобранное пространство имён
 низкоуровневого протокола определяются в
-[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/index.ts)
+[`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.16/src/index.ts)
 и
-[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.15/src/flight-protocol.ts).
+[`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/v0.0.16/src/flight-protocol.ts).
 Наблюдаемое поведение потоков защищено тестами, расположенными рядом с кодом в
-[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.15/src/client),
+[`src/client/`](https://github.com/woodger/arrow-flight-client/tree/v0.0.16/src/client),
 а контракт передачи данных остаётся в
 [`contracts/Flight.proto`](../../contracts/Flight.proto).
 
@@ -84,7 +84,9 @@ runtime-идентичности классов. Значения из втор�
 `doPut()`, `doAction()` и `listActions()` не накапливают ответы. `doGet()`
 возвращает одноразовый `FlightStreamReader`, чтобы объект `RecordBatch` сохранял
 связь со своими прикладными метаданными, а сообщения только с метаданными не
-отбрасывались.
+отбрасывались. `FlightStreamReader.cancel()` прерывает активный `DoGet` и
+завершается после освобождения ресурсов потока. Выполняющееся чтение отклоняется
+с `AbortError`.
 
 Накопление выполняется явно: `getTable()` создаёт полную Arrow `Table`, а
 `putTable()` собирает все сообщения сервера `PutResult`.
@@ -118,6 +120,14 @@ IPC-адаптер сохраняет заданные вызывающим ко
 `Date`. Отмена вызывающим кодом отклоняет вызов с `AbortError`; истечение
 `deadline` высокоуровневого вызова возвращает `ClientError` из `nice-grpc` с кодом
 `DEADLINE_EXCEEDED`.
+
+`FlightCallOptions.onTrailer` предоставляет полученные trailing
+metadata, в том числе для завершившихся ошибкой вызовов, в типе проекта
+`FlightResponseMetadata`. Значения представлены массивами строк или копий
+`Uint8Array`. Транспортные ошибки сохраняют прежний тип `ClientError`, `code` и
+`details`. В [примере чтения деталей ошибки](./guides/index.md#чтение-деталей-ошибки)
+показан доступ к PyArrow `FlightError.extra_info` без декодирования прикладного
+содержимого на транспортном уровне.
 
 TLS по умолчанию использует системные корневые сертификаты и принимает
 пользовательские корни вместе с необязательными идентификационными данными

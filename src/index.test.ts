@@ -30,6 +30,7 @@ import type {
   FlightPollInfo,
   FlightPutOptions,
   FlightPutResult,
+  FlightResponseMetadata,
   FlightStreamChunk,
   FlightStreamReader,
   FlightTicket,
@@ -54,6 +55,7 @@ type RootClientTypeContracts = [
   FlightPollInfo,
   FlightPutOptions,
   FlightPutResult,
+  FlightResponseMetadata,
   FlightStreamChunk,
   FlightStreamReader,
   FlightTicket,
@@ -61,7 +63,7 @@ type RootClientTypeContracts = [
 ];
 
 const expectedRootClientTypeContractCount: RootClientTypeContracts['length'] =
-  20;
+  21;
 
 const runtimeExportNames = [
   'FlightClient',
@@ -84,7 +86,7 @@ describe('source facade', () => {
   });
 
   test('exposes public client type contracts', () => {
-    assert.strictEqual(expectedRootClientTypeContractCount, 20);
+    assert.strictEqual(expectedRootClientTypeContractCount, 21);
   });
 
   test('exposes the Flight protocol facade', () => {
