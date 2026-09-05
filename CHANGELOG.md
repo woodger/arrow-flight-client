@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Clarified unreleased API availability and stream-reader cleanup in the English,
+  Russian, and Simplified Chinese guides.
 - Updated the protobuf runtime and contributor tooling, and regenerated Flight
   bindings with `ts-proto` 2.12.1. Protocol JSON readers now also accept the
   original protobuf field names alongside their camelCase names.

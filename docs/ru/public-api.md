@@ -119,8 +119,8 @@ IPC-адаптер сохраняет заданные вызывающим ко
 `deadline` высокоуровневого вызова возвращает `ClientError` из `nice-grpc` с кодом
 `DEADLINE_EXCEEDED`.
 
-`FlightCallOptions.onTrailer` предоставляет полученные trailing metadata, в том
-числе для завершившихся ошибкой вызовов, в типе проекта
+`FlightCallOptions.onTrailer` (`Unreleased`) предоставляет полученные trailing
+metadata, в том числе для завершившихся ошибкой вызовов, в типе проекта
 `FlightResponseMetadata`. Значения представлены массивами строк или копий
 `Uint8Array`. Транспортные ошибки сохраняют прежний тип `ClientError`, `code` и
 `details`. В [примере чтения деталей ошибки](./guides/index.md#чтение-деталей-ошибки)

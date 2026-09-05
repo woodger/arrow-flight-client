@@ -74,7 +74,8 @@ main().catch(console.error);
 
 ## 流式处理记录批次
 
-需要逐步处理响应而不是将其收集为一个表时，请使用 `doGet()`：
+需要逐步处理响应而不是将其收集为一个表时，请使用 `doGet()`。此示例在读取
+第一个记录批次后停止；通过 `break` 退出 `for await` 循环会关闭 reader：
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -95,6 +96,7 @@ async function main() {
       for await (const chunk of reader) {
         if (chunk.data) {
           console.log('Batch rows:', chunk.data.numRows);
+          break;
         }
       }
 
@@ -110,6 +112,30 @@ async function main() {
 
 main().catch(console.error);
 ```
+
+每个 `FlightStreamReader` 只能消费一次：使用一个 `for await` 循环或调用一次
+`readAll()`。再次读取会失败，在 `break` 或 `cancel()` 之后也一样。
+需要新的 reader 时，请再次调用 `doGet(ticket)`。
+
+如果打开 reader 仅为查看数据模式，且不开始迭代，请使用 `cancel()` 释放流：
+
+```ts
+import type { FlightClient, FlightTicket } from 'arrow-flight-client';
+
+export async function inspectSchema(client: FlightClient, ticket: FlightTicket) {
+  const reader = await client.doGet(ticket);
+
+  try {
+    console.log(reader.schema);
+  }
+  finally {
+    await reader.cancel();
+  }
+}
+```
+
+调用方仍负责管理客户端，并在所有调用完成后使用 `client.close()` 关闭它，
+如前一个示例所示。
 
 ## 上传表
 
@@ -150,6 +176,10 @@ main().catch(console.error);
 Arrow IPC 帧处理由调用方负责。
 
 ## 读取错误详情
+
+> **Unreleased:** 此示例使用 `FlightCallOptions.onTrailer` 和
+> `FlightResponseMetadata`，它们在 `arrow-flight-client@0.0.15` 中不可用。
+> 请参阅[更新日志](../../../CHANGELOG.md#unreleased)。
 
 使用 `FlightCallOptions.onTrailer` 保存调用的尾随元数据，包括调用失败时的
 元数据。PyArrow 的 gRPC 传输层将 `FlightError.extra_info` 作为不透明字节放在

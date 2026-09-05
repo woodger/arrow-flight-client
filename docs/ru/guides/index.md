@@ -78,7 +78,8 @@ main().catch(console.error);
 ## Потоковая обработка RecordBatch
 
 Используйте `doGet()`, когда ответ нужно обрабатывать последовательно, а не
-собирать в одну таблицу:
+собирать в одну таблицу. Этот пример останавливается после первого RecordBatch;
+выход из цикла `for await` через `break` закрывает reader:
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -99,6 +100,7 @@ async function main() {
       for await (const chunk of reader) {
         if (chunk.data) {
           console.log('Batch rows:', chunk.data.numRows);
+          break;
         }
       }
 
@@ -114,6 +116,32 @@ async function main() {
 
 main().catch(console.error);
 ```
+
+Каждый `FlightStreamReader` допускает однократное чтение: используйте один цикл
+`for await` или один вызов `readAll()`. Повторное чтение, в том числе после
+`break` или `cancel()`, завершается ошибкой. Для нового чтения снова вызовите
+`doGet(ticket)`.
+
+Если reader открыт только для просмотра схемы и итерация не начинается,
+освободите поток с помощью `cancel()`:
+
+```ts
+import type { FlightClient, FlightTicket } from 'arrow-flight-client';
+
+export async function inspectSchema(client: FlightClient, ticket: FlightTicket) {
+  const reader = await client.doGet(ticket);
+
+  try {
+    console.log(reader.schema);
+  }
+  finally {
+    await reader.cancel();
+  }
+}
+```
+
+Вызывающий код по-прежнему владеет клиентом и закрывает его через `client.close()`
+после завершения всех вызовов, как в предыдущем примере.
 
 ## Отправка таблицы
 
@@ -156,6 +184,10 @@ main().catch(console.error);
 низкоуровневых вызовов `DoExchange`.
 
 ## Чтение деталей ошибки
+
+> **Unreleased:** В примере используются `FlightCallOptions.onTrailer` и
+> `FlightResponseMetadata`, которых нет в `arrow-flight-client@0.0.15`.
+> См. [changelog](../../../CHANGELOG.md#unreleased).
 
 Используйте `FlightCallOptions.onTrailer`, чтобы сохранить trailing metadata
 вызова, в том числе завершившегося ошибкой. gRPC-транспорт PyArrow передаёт

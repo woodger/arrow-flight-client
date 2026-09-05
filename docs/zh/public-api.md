@@ -101,7 +101,7 @@ Flight 响应流仍为 `AsyncIterable` 值。`listFlights()`、`doPut()`、
 高级调用截止时间到期时则以 `nice-grpc` 的 `ClientError` 拒绝，其错误码为
 `DEADLINE_EXCEEDED`。
 
-`FlightCallOptions.onTrailer` 通过项目定义的 `FlightResponseMetadata` 提供收到的
+`FlightCallOptions.onTrailer`（`Unreleased`）通过项目定义的 `FlightResponseMetadata` 提供收到的
 尾随元数据，包括调用失败时的元数据。每个值都是字符串或复制后的 `Uint8Array`
 组成的数组。传输错误保留原有的 `ClientError` 类型、`code` 和 `details`。
 参见[读取错误详情示例](./guides/index.md#读取错误详情)，了解如何访问 PyArrow

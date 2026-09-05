@@ -78,7 +78,8 @@ main().catch(console.error);
 ## Stream Record Batches
 
 Use `doGet()` when the response should be consumed incrementally instead of
-collected into one table:
+collected into one table. This example stops after the first record batch;
+leaving the `for await` loop with `break` closes the reader:
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -99,6 +100,7 @@ async function main() {
       for await (const chunk of reader) {
         if (chunk.data) {
           console.log('Batch rows:', chunk.data.numRows);
+          break;
         }
       }
 
@@ -114,6 +116,31 @@ async function main() {
 
 main().catch(console.error);
 ```
+
+Each `FlightStreamReader` is single-use: consume it with one `for await` loop
+or one `readAll()` call. A second read, including after `break` or `cancel()`,
+fails. Call `doGet(ticket)` again when you need a new reader.
+
+If you open a reader only to inspect its schema and do not start iteration,
+use `cancel()` to release the stream:
+
+```ts
+import type { FlightClient, FlightTicket } from 'arrow-flight-client';
+
+export async function inspectSchema(client: FlightClient, ticket: FlightTicket) {
+  const reader = await client.doGet(ticket);
+
+  try {
+    console.log(reader.schema);
+  }
+  finally {
+    await reader.cancel();
+  }
+}
+```
+
+The caller still owns the client and closes it with `client.close()` when it
+has finished all calls, as in the preceding example.
 
 ## Upload a Table
 
@@ -154,6 +181,10 @@ their curated messages and codecs under the root `flightProtocol` namespace.
 The caller owns raw `DoExchange` Arrow IPC framing.
 
 ## Read Error Details
+
+> **Unreleased:** This example uses `FlightCallOptions.onTrailer` and
+> `FlightResponseMetadata`, which are not available in `arrow-flight-client@0.0.15`.
+> See the [changelog](../../CHANGELOG.md#unreleased).
 
 Use `FlightCallOptions.onTrailer` to retain trailing metadata for a call,
 including when it fails. PyArrow's gRPC transport sends `FlightError.extra_info`
