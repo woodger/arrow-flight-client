@@ -70,7 +70,8 @@ type RawClient = flightProtocol.FlightRawClient;
 Flight 响应流仍为 `AsyncIterable` 值。`listFlights()`、`doPut()`、
 `doAction()` 和 `listActions()` 不会收集响应。`doGet()` 返回只能消费一次的
 `FlightStreamReader`，以保持记录批次与其应用元数据之间的关联，并避免丢弃
-仅包含元数据的消息。
+仅包含元数据的消息。`FlightStreamReader.cancel()` 会中止活动的 `DoGet`，并在
+流资源释放后完成。正在进行的读取会以 `AbortError` 拒绝。
 
 结果收集必须显式进行：`getTable()` 创建完整的 Arrow `Table`，而
 `putTable()` 收集服务器返回的所有 `PutResult` 消息。

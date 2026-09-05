@@ -87,6 +87,8 @@ for await (const chunk of reader) {
 ```
 
 只有在确实需要将完整数据流收集为 Arrow `Table` 时才使用 `getTable()`。
+调用 `reader.cancel()` 会中止活动的 `DoGet`，并在流资源释放后完成；正在进行的
+读取会以 `AbortError` 拒绝。
 
 ## DoPut
 

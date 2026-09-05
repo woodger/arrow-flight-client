@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Made `FlightStreamReader.cancel()` abort an active pending `DoGet` read,
+  reject that read with `AbortError`, and wait for stream cleanup before
+  resolving.
 - Exposed high-level call trailers through `FlightCallOptions.onTrailer` and
   `FlightResponseMetadata`, making PyArrow `FlightError.extra_info` available
   without changing transport error codes or messages.

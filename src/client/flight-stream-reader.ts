@@ -23,26 +23,35 @@ import type { FlightStreamChunk } from './types';
 export interface FlightStreamReader extends AsyncIterable<FlightStreamChunk> {
   readonly schema: Schema
   readAll(): Promise<Table>
+  /** Aborts an active DoGet; pending reads reject with AbortError. */
   cancel(): Promise<void>
 }
 
 class DefaultFlightStreamReader implements FlightStreamReader {
+  private readonly abortSource: () => void;
   private readonly events: FlightIpcEvent[] = [];
   private readonly onFinish: () => void;
   private readonly prefetched: FlightData[] = [];
   private readonly source: AsyncIterable<FlightData>;
+  private cancellation: Promise<void> | undefined;
   private eventAvailable = Promise.resolve();
   private eventIndex = 0;
   private notifyEventAvailable: (() => void) | undefined;
   private reader: RecordBatchReader | undefined;
   private sourceIterator: AsyncIterator<FlightData> | undefined;
   private streamSchema: Schema | undefined;
+  private cancelled = false;
   private reading = false;
   private finished = false;
 
-  constructor(source: AsyncIterable<FlightData>, onFinish: () => void) {
+  constructor(
+    source: AsyncIterable<FlightData>,
+    onFinish: () => void,
+    abortSource: () => void
+  ) {
     this.source = source;
     this.onFinish = onFinish;
+    this.abortSource = abortSource;
     this.resetEventSignal();
   }
 
@@ -107,7 +116,22 @@ class DefaultFlightStreamReader implements FlightStreamReader {
     return new Table(this.schema, batches);
   }
 
-  async cancel(): Promise<void> {
+  cancel(): Promise<void> {
+    this.cancellation ??= this.cancelStream();
+    return this.cancellation;
+  }
+
+  private async cancelStream(): Promise<void> {
+    if (this.finished) {
+      return;
+    }
+
+    this.cancelled = true;
+    this.abortSource();
+    // Mark the reader finished before Arrow unwinds its pending iterator so
+    // the iterator's finally block cannot start a second cancellation.
+    this.finish();
+
     try {
       if (this.reader) {
         await this.reader.cancel();
@@ -116,8 +140,10 @@ class DefaultFlightStreamReader implements FlightStreamReader {
         await this.sourceIterator?.return?.();
       }
     }
-    finally {
-      this.finish();
+    catch (error) {
+      if (!isAbortError(error)) {
+        throw error;
+      }
     }
   }
 
@@ -139,6 +165,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
 
     try {
       while (!reader) {
+        this.throwIfCancelled();
         const event = this.peekEvent();
 
         if (event?.type === 'metadata') {
@@ -163,6 +190,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
         if (outcome.type === 'error') {
           throw outcome.error;
         }
+        this.throwIfCancelled();
 
         reader = outcome.reader;
       }
@@ -184,6 +212,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
       };
 
       while (true) {
+        this.throwIfCancelled();
         const event = this.peekEvent();
 
         if (event?.type === 'metadata') {
@@ -197,6 +226,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
 
         if (event?.type === 'batch') {
           const next = await ensurePending().next;
+          this.throwIfCancelled();
 
           if (next.done) {
             throw new FlightProtocolError(
@@ -224,6 +254,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
         if (outcome.type === 'error') {
           throw outcome.error;
         }
+        this.throwIfCancelled();
         if (outcome.result.done) {
           return;
         }
@@ -241,17 +272,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
     }
     finally {
       if (!this.finished) {
-        try {
-          if (this.reader) {
-            await this.reader.cancel();
-          }
-          else {
-            await this.sourceIterator.return?.();
-          }
-        }
-        finally {
-          this.finish();
-        }
+        await this.cancel();
       }
     }
   }
@@ -290,6 +311,12 @@ class DefaultFlightStreamReader implements FlightStreamReader {
     this.eventAvailable = new Promise((resolve) => {
       this.notifyEventAvailable = resolve;
     });
+  }
+
+  private throwIfCancelled(): void {
+    if (this.cancelled) {
+      throw createAbortError();
+    }
   }
 
   private async openArrowReader(): Promise<RecordBatchReader> {
@@ -338,7 +365,21 @@ class DefaultFlightStreamReader implements FlightStreamReader {
 
 export async function createFlightStreamReader(
   source: AsyncIterable<FlightData>,
-  onFinish: () => void
+  onFinish: () => void,
+  abortSource: () => void = () => undefined
 ): Promise<FlightStreamReader> {
-  return new DefaultFlightStreamReader(source, onFinish).open();
+  return new DefaultFlightStreamReader(source, onFinish, abortSource).open();
+}
+
+function isAbortError(error: unknown): boolean {
+  return typeof error === 'object'
+    && error !== null
+    && 'name' in error
+    && error.name === 'AbortError';
+}
+
+function createAbortError(): Error {
+  const error = new Error('The operation was aborted');
+  error.name = 'AbortError';
+  return error;
 }

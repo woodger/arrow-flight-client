@@ -244,6 +244,93 @@ describe('Flight client integration', () => {
     }
   });
 
+  test('cancels an active download', { timeout: 2_000 }, async () => {
+    const table = tableFromArrays({ id: [1] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('active-download')),
+      table
+    )) {
+      messages.push(message);
+    }
+
+    const schema = messages.find(({ dataHeader }) => (
+      Message.decode(dataHeader).isSchema()
+    ));
+    assert.ok(schema);
+
+    let releaseCall: () => void = () => undefined;
+    let markCallWaiting: () => void = () => undefined;
+    let markCancellationObserved: () => void = () => undefined;
+    const callReleased = new Promise<void>((resolve) => {
+      releaseCall = resolve;
+    });
+    const callWaiting = new Promise<void>((resolve) => {
+      markCallWaiting = resolve;
+    });
+    const cancellationObserved = new Promise<void>((resolve) => {
+      markCancellationObserved = resolve;
+    });
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *doGet(_request, context) {
+        yield schema;
+
+        if (context.signal.aborted) {
+          markCancellationObserved();
+        }
+        else {
+          context.signal.addEventListener(
+            'abort',
+            markCancellationObserved,
+            { once: true }
+          );
+        }
+
+        markCallWaiting();
+        await callReleased;
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      const reader = await client.doGet(Buffer.from('ticket'));
+      const reading = reader.readAll();
+      const readError = reading.then(
+        () => undefined,
+        (error: unknown) => error
+      );
+      await callWaiting;
+
+      const cancellation = reader.cancel();
+      let cancellationTimeout: NodeJS.Timeout | undefined;
+      const cancelledBeforeRelease = await Promise.race([
+        Promise.all([cancellation, cancellationObserved]).then(() => true),
+        new Promise<false>((resolve) => {
+          cancellationTimeout = setTimeout(() => resolve(false), 500);
+        })
+      ]);
+      clearTimeout(cancellationTimeout);
+
+      if (!cancelledBeforeRelease) {
+        releaseCall();
+      }
+
+      await cancellation;
+      const error = await readError;
+      assert.strictEqual(cancelledBeforeRelease, true);
+      assert.ok(error instanceof Error);
+      assert.strictEqual(error.name, 'AbortError');
+    }
+    finally {
+      releaseCall();
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
   test('exposes upload error details before rejecting', async () => {
     const table = tableFromArrays({ id: [1] });
     const extraInfo = Buffer.from('{"reason":"DIGEST_MISMATCH"}');

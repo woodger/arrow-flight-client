@@ -139,6 +139,11 @@ export async function inspectSchema(client: FlightClient, ticket: FlightTicket) 
 }
 ```
 
+`cancel()` can also be called after iteration starts: it aborts a pending
+`DoGet` read, which rejects with `AbortError`, and resolves after the stream
+resources are released. Leaving a `for await` loop with `break` uses the same
+cleanup path without surfacing a cancellation error.
+
 The caller still owns the client and closes it with `client.close()` when it
 has finished all calls, as in the preceding example.
 

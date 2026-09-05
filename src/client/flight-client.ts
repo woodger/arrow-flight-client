@@ -195,22 +195,42 @@ export class FlightClient {
   ): Promise<FlightStreamReader> {
     this.assertOpen();
     const call = this.prepareCall(options, 'doGet');
+    // AsyncIterator.return() waits behind an outstanding next(). Give the
+    // reader a transport signal so cancellation can interrupt that read first.
+    const readerController = new AbortController();
+    const callSignal = call.options.signal;
+    const abortReader = () => { readerController.abort(); };
+    const dispose = () => {
+      callSignal?.removeEventListener('abort', abortReader);
+      call.dispose();
+    };
+
+    if (callSignal?.aborted) {
+      abortReader();
+    }
+    else {
+      callSignal?.addEventListener('abort', abortReader, { once: true });
+    }
 
     try {
       return await createFlightStreamReader(
         normalizeStreamErrors(
           this.client.doGet(
             { ticket: Buffer.from(ticket) },
-            call.options
+            {
+              ...call.options,
+              signal: readerController.signal
+            }
           ),
           call.ensureActive,
           call.normalizeError
         ),
-        call.dispose
+        dispose,
+        abortReader
       );
     }
     catch (error) {
-      call.dispose();
+      dispose();
       throw call.normalizeError(error);
     }
   }

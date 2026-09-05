@@ -134,6 +134,10 @@ export async function inspectSchema(client: FlightClient, ticket: FlightTicket) 
 }
 ```
 
+迭代开始后也可以调用 `cancel()`：它会中止等待中的 `DoGet` 读取，并在流资源
+释放后完成；该读取会以 `AbortError` 拒绝。通过 `break` 退出 `for await` 循环
+会使用相同的清理路径，但不会产生取消错误。
+
 调用方仍负责管理客户端，并在所有调用完成后使用 `client.close()` 关闭它，
 如前一个示例所示。
 

@@ -78,7 +78,9 @@ Flight response streams remain `AsyncIterable` values. `listFlights()`,
 `doPut()`, `doAction()`, and `listActions()` do not collect responses. `doGet()`
 returns a single-use `FlightStreamReader` so a record batch and its
 application metadata remain associated and metadata-only messages are not
-discarded.
+discarded. `FlightStreamReader.cancel()` aborts an active `DoGet` and resolves
+after its stream resources are released. An in-progress read rejects with
+`AbortError`.
 
 Collection is explicit: `getTable()` creates a complete Arrow `Table`, and
 `putTable()` collects all server `PutResult` messages.
