@@ -152,3 +152,49 @@ main().catch(console.error);
 `Handshake` and `DoExchange` remain available through `FlightClient.raw`, with
 their curated messages and codecs under the root `flightProtocol` namespace.
 The caller owns raw `DoExchange` Arrow IPC framing.
+
+## Read Error Details
+
+Use `FlightCallOptions.onTrailer` to retain trailing metadata for a call,
+including when it fails. PyArrow's gRPC transport sends `FlightError.extra_info`
+as opaque bytes in `grpc-status-details-bin`, as shown in the
+[Arrow transport implementation](https://github.com/apache/arrow/blob/apache-arrow-24.0.0/cpp/src/arrow/flight/transport/grpc/util_internal.cc#L297).
+The callback receives arrays of text or binary values and must not throw.
+Store the trailers there and interpret the payload when handling the error:
+
+```ts
+import { FlightClient, pathDescriptor } from 'arrow-flight-client';
+import type { FlightResponseMetadata } from 'arrow-flight-client';
+
+async function main() {
+  const client = new FlightClient('localhost:8815');
+  let trailer: FlightResponseMetadata | undefined;
+
+  try {
+    await client.getFlightInfo(pathDescriptor('model'), {
+      onTrailer: (metadata) => { trailer = metadata; }
+    });
+  }
+  catch (error) {
+    const extraInfo = trailer?.['grpc-status-details-bin']?.[0];
+
+    if (extraInfo instanceof Uint8Array) {
+      console.error('Flight extra_info:', Buffer.from(extraInfo).toString('utf8'));
+    }
+
+    throw error;
+  }
+  finally {
+    await client.close();
+  }
+}
+
+main().catch(console.error);
+```
+
+This example assumes the server uses UTF-8 text. If the payload is JSON,
+parse and validate it according to the server's application contract. The
+client preserves the bytes and the existing error's `code` and `details`.
+The same option is available for streaming calls and `getTable()` / `putTable()`;
+trailers arrive when the RPC finishes, not when a reader is first opened.
+Failures before a server response may have no server-provided trailers.

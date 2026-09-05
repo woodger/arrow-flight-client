@@ -110,6 +110,14 @@ support an `AbortSignal` and an absolute `Date` deadline. Caller cancellation
 rejects with `AbortError`; high-level deadline expiry rejects with a nice-grpc
 `ClientError` whose code is `DEADLINE_EXCEEDED`.
 
+`FlightCallOptions.onTrailer` exposes received trailing metadata, including for
+failed calls, as project-owned `FlightResponseMetadata`. Values are arrays of
+strings or copied `Uint8Array` values. Transport errors retain their existing
+`ClientError` type, `code`, and `details`. See the
+[error detail example](./guides/index.md#read-error-details) for accessing
+PyArrow `FlightError.extra_info` without decoding application payloads in the
+transport layer.
+
 TLS uses platform roots by default and accepts custom roots plus an optional
 mutual-TLS identity. A private key and certificate chain form one identity and
 must be configured together.

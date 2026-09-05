@@ -414,6 +414,20 @@ function prepareCall(
   if (preparedSignal.signal) {
     callOptions.signal = preparedSignal.signal;
   }
+  const onTrailer = options.onTrailer;
+
+  if (onTrailer) {
+    callOptions.onTrailer = (trailer) => {
+      onTrailer(Object.fromEntries(
+        [...trailer].map(([key, values]) => [
+          key,
+          values.map((value) => (
+            typeof value === 'string' ? value : Uint8Array.from(value)
+          ))
+        ])
+      ));
+    };
+  }
 
   const normalizeError = (error: unknown): unknown => {
     if (!preparedSignal.deadlineExceeded() || !isAbortError(error)) {
@@ -488,7 +502,8 @@ function snapshotCallOptions(options: FlightCallOptions): FlightCallOptions {
   return {
     ...(metadata ? { metadata } : {}),
     ...(options.signal ? { signal: options.signal } : {}),
-    ...(deadlineSnapshot ? { deadline: deadlineSnapshot } : {})
+    ...(deadlineSnapshot ? { deadline: deadlineSnapshot } : {}),
+    ...(options.onTrailer ? { onTrailer: options.onTrailer } : {})
   };
 }
 

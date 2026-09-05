@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Exposed high-level call trailers through `FlightCallOptions.onTrailer` and
+  `FlightResponseMetadata`, making PyArrow `FlightError.extra_info` available
+  without changing transport error codes or messages.
+
 ## [0.0.15] - 2026-08-13
 
 ### Changed

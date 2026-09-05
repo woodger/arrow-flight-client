@@ -1,12 +1,13 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Message, tableFromArrays, util } from 'apache-arrow';
-import { ClientError, createServer, Status } from 'nice-grpc';
+import { ClientError, createServer, ServerError, Status } from 'nice-grpc';
 import type { CallContext } from 'nice-grpc';
 import { FlightClient } from './flight-client';
 import { encodeFlightData } from './ipc';
 import { encodeDescriptor } from './protocol';
 import { pathDescriptor } from './types';
+import type { FlightResponseMetadata } from './types';
 import { FlightServiceDefinition } from '../generated/Flight';
 import type {
   FlightData,
@@ -110,6 +111,175 @@ describe('Flight client integration', () => {
       assert.deepStrictEqual(actions, [
         { type: 'request-1', description: '' }
       ]);
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('exposes unary error details in trailers before rejecting', async () => {
+    const extraInfo = Buffer.from(JSON.stringify({
+      code: 'MODEL_SCHEMA_MISMATCH',
+      reason: 'DIGEST_MISMATCH',
+      layer: 'target',
+      expectedSha256: 'a'.repeat(64),
+      actualSha256: 'b'.repeat(64)
+    }));
+    const trailers: FlightResponseMetadata[] = [];
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async getFlightInfo(_request, context) {
+        context.trailer.set('grpc-status-details-bin', extraInfo);
+        throw new ServerError(Status.INVALID_ARGUMENT, 'Model schema mismatch');
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      await assert.rejects(
+        client.getFlightInfo(pathDescriptor('model'), {
+          onTrailer: (trailer) => { trailers.push(trailer); }
+        }),
+        (error: unknown) => {
+          assert.ok(error instanceof ClientError);
+          assert.strictEqual(error.code, Status.INVALID_ARGUMENT);
+          assert.strictEqual(error.details, 'Model schema mismatch');
+          assert.strictEqual(
+            error.path,
+            '/arrow.flight.protocol.FlightService/GetFlightInfo'
+          );
+          assert.strictEqual(trailers.length, 1);
+          assert.deepStrictEqual(
+            trailers[0]?.['grpc-status-details-bin'],
+            [Uint8Array.from(extraInfo)]
+          );
+          return true;
+        }
+      );
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('exposes successful streaming trailers with repeated binary values', async () => {
+    const trailers: FlightResponseMetadata[] = [];
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *listActions(_request, context) {
+        context.trailer.set('x-request-id', 'request-1');
+        context.trailer.set('x-diagnostic-bin', [
+          Uint8Array.of(0, 255),
+          Uint8Array.of(128, 0)
+        ]);
+        yield { type: 'available', description: '' };
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      for await (const action of client.listActions({
+        onTrailer: (trailer) => { trailers.push(trailer); }
+      })) {
+        void action;
+      }
+
+      assert.deepStrictEqual(trailers, [{
+        'x-request-id': ['request-1'],
+        'x-diagnostic-bin': [Uint8Array.of(0, 255), Uint8Array.of(128, 0)]
+      }]);
+    }
+    finally {
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('exposes binary error details after opening a download', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const extraInfo = Uint8Array.of(0, 255, 128, 123);
+    const trailers: FlightResponseMetadata[] = [];
+    let failCall: () => void = () => undefined;
+    const callMayFail = new Promise<void>((resolve) => {
+      failCall = resolve;
+    });
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *doGet(_request, context) {
+        yield* encodeFlightData(encodeDescriptor(pathDescriptor('model')), table);
+        await callMayFail;
+        context.trailer.set('grpc-status-details-bin', extraInfo);
+        throw new ServerError(Status.INTERNAL, 'Download failed');
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      const reader = await client.doGet(Buffer.from('ticket'), {
+        onTrailer: (trailer) => { trailers.push(trailer); }
+      });
+      failCall();
+
+      await assert.rejects(reader.readAll(), (error: unknown) => {
+        assert.ok(error instanceof ClientError);
+        assert.strictEqual(error.code, Status.INTERNAL);
+        assert.strictEqual(error.details, 'Download failed');
+        assert.strictEqual(trailers.length, 1);
+        assert.deepStrictEqual(
+          trailers[0]?.['grpc-status-details-bin'],
+          [extraInfo]
+        );
+        return true;
+      });
+    }
+    finally {
+      failCall();
+      await client.close();
+      await server.shutdown();
+    }
+  });
+
+  test('exposes upload error details before rejecting', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const extraInfo = Buffer.from('{"reason":"DIGEST_MISMATCH"}');
+    const trailers: FlightResponseMetadata[] = [];
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *doPut(request, context) {
+        for await (const message of request) {
+          void message;
+        }
+
+        context.trailer.set('grpc-status-details-bin', extraInfo);
+        yield { appMetadata: Buffer.from('received') };
+        throw new ServerError(Status.INVALID_ARGUMENT, 'Upload rejected');
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+
+    try {
+      await assert.rejects(
+        client.putTable(pathDescriptor('model'), table, {
+          onTrailer: (trailer) => { trailers.push(trailer); }
+        }),
+        (error: unknown) => {
+          assert.ok(error instanceof ClientError);
+          assert.strictEqual(error.code, Status.INVALID_ARGUMENT);
+          assert.strictEqual(error.details, 'Upload rejected');
+          assert.strictEqual(trailers.length, 1);
+          assert.deepStrictEqual(
+            trailers[0]?.['grpc-status-details-bin'],
+            [Uint8Array.from(extraInfo)]
+          );
+          return true;
+        }
+      );
     }
     finally {
       await client.close();

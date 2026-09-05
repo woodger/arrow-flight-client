@@ -154,3 +154,49 @@ main().catch(console.error);
 соответствующие отобранные сообщения и кодеки — через корневое пространство имён
 `flightProtocol`. Вызывающий код самостоятельно отвечает за фрейминг Arrow IPC
 низкоуровневых вызовов `DoExchange`.
+
+## Чтение деталей ошибки
+
+Используйте `FlightCallOptions.onTrailer`, чтобы сохранить trailing metadata
+вызова, в том числе завершившегося ошибкой. gRPC-транспорт PyArrow передаёт
+`FlightError.extra_info` как непрозрачные байты в `grpc-status-details-bin`, что
+видно в [реализации транспорта Arrow](https://github.com/apache/arrow/blob/apache-arrow-24.0.0/cpp/src/arrow/flight/transport/grpc/util_internal.cc#L297).
+Callback получает массивы текстовых или бинарных значений и не должен бросать
+исключения. Сохраните в нём trailers, а содержимое разбирайте при обработке ошибки:
+
+```ts
+import { FlightClient, pathDescriptor } from 'arrow-flight-client';
+import type { FlightResponseMetadata } from 'arrow-flight-client';
+
+async function main() {
+  const client = new FlightClient('localhost:8815');
+  let trailer: FlightResponseMetadata | undefined;
+
+  try {
+    await client.getFlightInfo(pathDescriptor('model'), {
+      onTrailer: (metadata) => { trailer = metadata; }
+    });
+  }
+  catch (error) {
+    const extraInfo = trailer?.['grpc-status-details-bin']?.[0];
+
+    if (extraInfo instanceof Uint8Array) {
+      console.error('Flight extra_info:', Buffer.from(extraInfo).toString('utf8'));
+    }
+
+    throw error;
+  }
+  finally {
+    await client.close();
+  }
+}
+
+main().catch(console.error);
+```
+
+В этом примере предполагается, что сервер использует текст UTF-8. Если содержимое
+представлено JSON, разбирайте и проверяйте его согласно прикладному контракту
+сервера. Клиент сохраняет байты и прежние `code` и `details` ошибки.
+Та же опция доступна для потоковых вызовов и `getTable()` / `putTable()`;
+trailers приходят при завершении RPC, а не при первоначальном открытии reader.
+При сбое до ответа сервера trailers от сервера могут отсутствовать.

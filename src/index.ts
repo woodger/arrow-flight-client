@@ -35,6 +35,7 @@ export type {
   FlightPollInfo,
   FlightPutOptions,
   FlightPutResult,
+  FlightResponseMetadata,
   FlightStreamChunk,
   FlightTicket,
   FlightTlsOptions

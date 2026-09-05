@@ -30,6 +30,19 @@ class CompatibilityServer(flight.FlightServerBase):
             middleware={"incoming_headers": IncomingHeadersMiddlewareFactory()},
         )
 
+    def get_flight_info(self, context, descriptor):
+        if descriptor.path != [b"model-schema-mismatch"]:
+            raise NotImplementedError(descriptor.path)
+
+        extra_info = json.dumps({
+            "code": "MODEL_SCHEMA_MISMATCH",
+            "reason": "DIGEST_MISMATCH",
+            "layer": "target",
+            "expectedSha256": "a" * 64,
+            "actualSha256": "b" * 64,
+        }).encode("utf-8")
+        raise flight.FlightInternalError("Model schema mismatch", extra_info=extra_info)
+
     def do_action(self, context, action):
         if action.type != "read-authorization":
             raise NotImplementedError(action.type)
