@@ -258,16 +258,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/v0.0.16...HEAD
-[0.0.16]: https://github.com/woodger/arrow-flight-client/compare/v0.0.15...v0.0.16
-[0.0.15]: https://github.com/woodger/arrow-flight-client/compare/v0.0.14...v0.0.15
-[0.0.14]: https://github.com/woodger/arrow-flight-client/compare/v0.0.13...v0.0.14
-[0.0.13]: https://github.com/woodger/arrow-flight-client/compare/v0.0.12...v0.0.13
-[0.0.12]: https://github.com/woodger/arrow-flight-client/compare/v0.0.11...v0.0.12
-[0.0.11]: https://github.com/woodger/arrow-flight-client/compare/f14c512751f452f21903c7896e024282df9b6ab7...v0.0.11
-[0.0.10]: https://github.com/woodger/arrow-flight-client/compare/v0.0.9...f14c512751f452f21903c7896e024282df9b6ab7
-[0.0.9]: https://github.com/woodger/arrow-flight-client/compare/v0.0.8...v0.0.9
-[0.0.8]: https://github.com/woodger/arrow-flight-client/compare/v0.0.7...v0.0.8
-[0.0.7]: https://github.com/woodger/arrow-flight-client/compare/70c990a8066f504a590204416e4cc580c1ca6c15...v0.0.7
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/0.0.16...HEAD
+[0.0.16]: https://github.com/woodger/arrow-flight-client/compare/0.0.15...0.0.16
+[0.0.15]: https://github.com/woodger/arrow-flight-client/compare/0.0.14...0.0.15
+[0.0.14]: https://github.com/woodger/arrow-flight-client/compare/0.0.13...0.0.14
+[0.0.13]: https://github.com/woodger/arrow-flight-client/compare/0.0.12...0.0.13
+[0.0.12]: https://github.com/woodger/arrow-flight-client/compare/0.0.11...0.0.12
+[0.0.11]: https://github.com/woodger/arrow-flight-client/compare/f14c512751f452f21903c7896e024282df9b6ab7...0.0.11
+[0.0.10]: https://github.com/woodger/arrow-flight-client/compare/0.0.9...f14c512751f452f21903c7896e024282df9b6ab7
+[0.0.9]: https://github.com/woodger/arrow-flight-client/compare/0.0.8...0.0.9
+[0.0.8]: https://github.com/woodger/arrow-flight-client/compare/0.0.7...0.0.8
+[0.0.7]: https://github.com/woodger/arrow-flight-client/compare/70c990a8066f504a590204416e4cc580c1ca6c15...0.0.7
 [0.0.6]: https://github.com/woodger/arrow-flight-client/compare/8e5e3c2747716b92adaa4a49d0d789923b9557c7...70c990a8066f504a590204416e4cc580c1ca6c15
 [0.0.5]: https://github.com/woodger/arrow-flight-client/tree/8e5e3c2747716b92adaa4a49d0d789923b9557c7
