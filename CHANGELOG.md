@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Updated the protobuf runtime and contributor tooling, and regenerated Flight
+  bindings with `ts-proto` 2.12.1. Protocol JSON readers now also accept the
+  original protobuf field names alongside their camelCase names.
+
 ### Fixed
 
 - Exposed high-level call trailers through `FlightCallOptions.onTrailer` and
   `FlightResponseMetadata`, making PyArrow `FlightError.extra_info` available
   without changing transport error codes or messages.
+- Preserved `__proto__` keys when decoding session-option JSON maps through
+  the `flightProtocol` codecs.
 
 ## [0.0.15] - 2026-08-13
 
