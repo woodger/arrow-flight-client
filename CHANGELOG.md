@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Updated Node.js type definitions, Oxlint, and the protobuf generator to their
+  current compatible releases.
+
 ## [0.0.17] - 2026-09-09
 
 ### Changed
