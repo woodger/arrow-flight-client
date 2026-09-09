@@ -16,31 +16,18 @@ The script contract is defined in [`package.json`](../../package.json):
 - `npm run generate:proto` regenerates TypeScript bindings from `contracts/Flight.proto`;
 - `npm test` runs compiled tests through `fwa --prune`;
 - `npm run test:pyarrow` runs the compiled live PyArrow compatibility suite;
-- `npm run lint` runs Oxlint with the curated type-aware TypeScript rules over
-  the sources under `src/`;
+- `npm run lint` runs Oxlint with the curated type-aware TypeScript rules over the sources under `src/`;
 - `prepack` compiles the package before packing or publication.
 
-The protobuf and PyArrow commands delegate to the compiled repository CLI at
-`dist/cli/index.js`; its source is `src/cli/index.ts`. The generated bindings
-are committed, so a clean checkout can build the CLI before a contract change.
-Run `npm run build` before either CLI-backed command and rebuild after protobuf
-generation. The CLI accepts only fixed contributor command paths, runs
-project-local tools without a shell, and preserves their terminal output and
-exit status. It is not a consumer package entrypoint.
+The protobuf and PyArrow commands delegate to the compiled repository CLI at `dist/cli/index.js`; its source is `src/cli/index.ts`. The generated bindings are committed, so a clean checkout can build the CLI before a contract change. Run `npm run build` before either CLI-backed command and rebuild after protobuf generation. The CLI accepts only fixed contributor command paths, runs project-local tools without a shell, and preserves their terminal output and exit status. It is not a consumer package entrypoint.
 
-Protobuf generation invokes the pinned project-local `protoc` package rather
-than resolving a compiler from `PATH`. The `ts-proto` plugin is also resolved
-from the local npm installation, using its `.cmd` shim on Windows.
+Protobuf generation invokes the pinned project-local `protoc` package rather than resolving a compiler from `PATH`. The `ts-proto` plugin is also resolved from the local npm installation, using its `.cmd` shim on Windows.
 
 Tests do not compile source files themselves. After a TypeScript change, run `npm run build` before `npm test`.
 
-Type-aware linting treats `describe` and `test` imported from `node:test` as
-known safe calls. This exception applies only to the test registration calls;
-unhandled promises inside their callbacks remain lint errors.
+Type-aware linting treats `describe` and `test` imported from `node:test` as known safe calls. This exception applies only to the test registration calls; unhandled promises inside their callbacks remain lint errors.
 
-The PyArrow command also expects an existing build and the pinned Python
-dependency from `test/pyarrow/requirements.txt`. It remains separate so the
-ordinary test command has no Python or live-server requirement.
+The PyArrow command also expects an existing build and the pinned Python dependency from `test/pyarrow/requirements.txt`. It remains separate so the ordinary test command has no Python or live-server requirement.
 
 The existing `--prune` option may narrowly remove stale compiled test artifacts. This is an intentional part of the current test command and does not authorize other automatic cleanup.
 

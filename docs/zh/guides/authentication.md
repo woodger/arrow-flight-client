@@ -2,9 +2,7 @@
 
 [English](../../guides/authentication.md) | [Русский](../../ru/guides/authentication.md) | 简体中文
 
-本指南包含为监听 `localhost:8815` 的 Flight 服务器配置身份验证的代码片段。
-有关发现、下载、流式处理和上传的示例，请参阅
-[主要使用指南](./index.md)。
+本指南包含为监听 `localhost:8815` 的 Flight 服务器配置身份验证的代码片段。 有关发现、下载、流式处理和上传的示例，请参阅 [主要使用指南](./index.md)。
 
 ## Bearer Token
 
@@ -63,5 +61,4 @@ async function main() {
 main().catch(console.error);
 ```
 
-证书路径相对于进程当前工作目录解析。私钥和证书链共同构成一个客户端身份，
-必须同时配置。
+证书路径相对于进程当前工作目录解析。私钥和证书链共同构成一个客户端身份， 必须同时配置。

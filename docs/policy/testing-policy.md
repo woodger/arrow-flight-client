@@ -18,8 +18,7 @@ Not:
 
 ## How To Run Tests
 
-Unit and mock integration tests are written in TypeScript in `src/**/*.test.ts`
-or `src/**/*.spec.ts` and use the standard Node.js modules:
+Unit and mock integration tests are written in TypeScript in `src/**/*.test.ts` or `src/**/*.spec.ts` and use the standard Node.js modules:
 
 - `node:test`;
 - `node:assert`.
@@ -33,23 +32,15 @@ npm test
 
 The command contract lives in [`package.json`](../../package.json). `fwa --prune` discovers compiled tests, rejects stale source/output pairs, removes stale compiled test artifacts, and delegates execution to `node:test`.
 
-The published client supports the Node.js range declared in `package.json`.
-Repository development requires Node.js `^20.19.0 || >=22.12.0`, the combined
-supported range of the required development tools.
+The published client supports the Node.js range declared in `package.json`. Repository development requires Node.js `^20.19.0 || >=22.12.0`, the combined supported range of the required development tools.
 
-The live PyArrow compatibility suite is deliberately separate from the unit-test
-command. It requires the pinned dependency in
-[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/test/pyarrow/requirements.txt)
-and runs after compilation with:
+The live PyArrow compatibility suite is deliberately separate from the unit-test command. It requires the pinned dependency in [`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/test/pyarrow/requirements.txt) and runs after compilation with:
 
 ```sh
 npm run test:pyarrow
 ```
 
-The suite owns the server subprocess lifecycle and uses a dynamic local port.
-Its `*.pyarrow.e2e.ts` entrypoint stays outside the ordinary test filename
-patterns so `npm test` remains independent of Python and external Flight
-runtimes.
+The suite owns the server subprocess lifecycle and uses a dynamic local port. Its `*.pyarrow.e2e.ts` entrypoint stays outside the ordinary test filename patterns so `npm test` remains independent of Python and external Flight runtimes.
 
 ## Test Requirements
 
@@ -80,19 +71,14 @@ src/client/do-put.ts              -> src/client/do-put.test.ts
 src/client/metadata-middleware.ts -> src/client/metadata-middleware.test.ts
 ```
 
-Creating a test whose name looks like a test for a directory or an internal
-barrel module is forbidden:
+Creating a test whose name looks like a test for a directory or an internal barrel module is forbidden:
 
 ```text
 src/client.test.ts
 src/client/index.test.ts
 ```
 
-The root package entrypoint is an exception even when its implementation only
-re-exports symbols: its runtime and type export surface is an observable public
-contract. `src/index.test.ts` may verify which contracts are exposed, omitted,
-or grouped under a namespace, but it must not repeat behavior tests owned by
-the exported modules.
+The root package entrypoint is an exception even when its implementation only re-exports symbols: its runtime and type export surface is an observable public contract. `src/index.test.ts` may verify which contracts are exposed, omitted, or grouped under a namespace, but it must not repeat behavior tests owned by the exported modules.
 
 Integration and end-to-end tests may cover several production files. Their scope must be visible in the filename or suite name, for example `flight-client.e2e.test.ts`, and their assertions must verify integration behavior rather than repeat unit tests.
 
@@ -119,9 +105,7 @@ An integration test may import through the public entrypoint if it verifies obse
 
 Unit tests must not require a live Flight server. gRPC streams and external responses should be represented by the smallest test double that preserves the behavior under test.
 
-Tests against PyArrow or another Flight implementation are integration tests.
-Their server requirement, credentials, ports, and lifecycle must be explicit
-and must not be hidden inside a unit test command.
+Tests against PyArrow or another Flight implementation are integration tests. Their server requirement, credentials, ports, and lifecycle must be explicit and must not be hidden inside a unit test command.
 
 Protocol-level tests should assert observable Arrow Flight behavior, including:
 
