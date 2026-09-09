@@ -1,6 +1,6 @@
 {
   "name": "arrow-flight-client",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Apache Arrow Flight Client for Node.js",
   "keywords": [
     "apache-arrow",
@@ -10,7 +10,7 @@
     "grpc",
     "protobuf",
     "record-batch",
-    "columnar-data"
+    "pyarrow"
   ],
   "author": {
     "name": "Stanislav Potemkin",

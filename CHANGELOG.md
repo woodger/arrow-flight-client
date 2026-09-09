@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.17] - 2026-09-09
+
 ### Changed
 
 - Replaced `grpc-tools` with the pinned `protoc` 32.1.0 compiler, removing its
@@ -264,7 +266,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/0.0.16...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/0.0.17...HEAD
+[0.0.17]: https://github.com/woodger/arrow-flight-client/compare/0.0.16...0.0.17
 [0.0.16]: https://github.com/woodger/arrow-flight-client/compare/0.0.15...0.0.16
 [0.0.15]: https://github.com/woodger/arrow-flight-client/compare/0.0.14...0.0.15
 [0.0.14]: https://github.com/woodger/arrow-flight-client/compare/0.0.13...0.0.14

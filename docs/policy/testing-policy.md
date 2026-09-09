@@ -39,7 +39,7 @@ supported range of the required development tools.
 
 The live PyArrow compatibility suite is deliberately separate from the unit-test
 command. It requires the pinned dependency in
-[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/0.0.16/test/pyarrow/requirements.txt)
+[`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/test/pyarrow/requirements.txt)
 and runs after compilation with:
 
 ```sh
