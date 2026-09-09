@@ -7,18 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Updated Node.js type definitions, Oxlint, the protobuf compiler, and the
-  protobuf generator to their current compatible releases.
-
 ## [0.0.17] - 2026-09-09
 
 ### Changed
 
-- Replaced `grpc-tools` with the pinned `protoc` 32.1.0 compiler, removing its
+- Replaced `grpc-tools` with the pinned `protoc` 36.0.0 compiler, removing its
   install-time binary download and resolving the local `ts-proto` executable
   through the npm `.cmd` shim on Windows.
+- Updated Node.js type definitions, Oxlint, and `ts-proto` to their current
+  compatible releases.
 
 ## [0.0.16] - 2026-09-05
 

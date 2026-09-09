@@ -221,7 +221,8 @@ npm run build
 ```
 
 The generation command uses the compiled repository CLI, the pinned
-project-local `ts-proto` generator, and the `protoc` compiler.
+project-local `ts-proto` generator and `protoc` compiler, and does not resolve
+a system compiler from `PATH`.
 
 Tests run against compiled JavaScript, so run `npm run build` before `npm test`
 after changing TypeScript sources. Package publication invokes the build through
