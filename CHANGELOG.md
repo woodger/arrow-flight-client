@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced `grpc-tools` with the pinned `protoc` 32.1.0 compiler, removing its
+  install-time binary download and resolving the local `ts-proto` executable
+  through the npm `.cmd` shim on Windows.
+
 ## [0.0.16] - 2026-09-05
 
 ### Changed

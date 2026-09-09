@@ -29,8 +29,15 @@ async function runCli(args: readonly string[]): Promise<number> {
 
   switch (command) {
     case 'generate proto': {
-      const protocScript = requireFromCli.resolve('grpc-tools/bin/protoc.js');
-      const tsProtoPlugin = requireFromCli.resolve('ts-proto/protoc-gen-ts_proto');
+      const protocScript = requireFromCli.resolve('protoc/protoc.cjs');
+      const tsProtoPlugin = resolve(
+        projectRoot,
+        'node_modules',
+        '.bin',
+        process.platform === 'win32'
+          ? 'protoc-gen-ts_proto.cmd'
+          : 'protoc-gen-ts_proto'
+      );
 
       return runProcess(process.execPath, [
         protocScript,

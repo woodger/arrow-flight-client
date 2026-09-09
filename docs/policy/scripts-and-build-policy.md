@@ -28,6 +28,10 @@ generation. The CLI accepts only fixed contributor command paths, runs
 project-local tools without a shell, and preserves their terminal output and
 exit status. It is not a consumer package entrypoint.
 
+Protobuf generation invokes the pinned project-local `protoc` package rather
+than resolving a compiler from `PATH`. The `ts-proto` plugin is also resolved
+from the local npm installation, using its `.cmd` shim on Windows.
+
 Tests do not compile source files themselves. After a TypeScript change, run `npm run build` before `npm test`.
 
 Type-aware linting treats `describe` and `test` imported from `node:test` as
