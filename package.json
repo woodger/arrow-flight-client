@@ -60,7 +60,7 @@
     "fwa": "^2.1.4",
     "oxlint": "1.82.0",
     "oxlint-tsgolint": "^7.0.2001",
-    "protoc": "32.1.0",
+    "protoc": "36.0.0",
     "ts-proto": "2.12.3",
     "typescript": "7.0.2"
   },
