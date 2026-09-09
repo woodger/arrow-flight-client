@@ -9,12 +9,9 @@ Only high-quality libraries are allowed.
 npm is the only supported package manager for development and CI.
 
 - use `npm ci` for reproducible installs from the committed `package-lock.json`;
-- use `npm install` only when intentionally changing dependencies, and commit
-  the resulting `package.json` and `package-lock.json` changes together;
-- do not use Yarn, pnpm, Bun, or lockfiles produced by alternative package
-  managers;
-- do not add `packageManager` or `devEngines` to `package.json` to enforce this
-  policy.
+- use `npm install` only when intentionally changing dependencies, and commit the resulting `package.json` and `package-lock.json` changes together;
+- do not use Yarn, pnpm, Bun, or lockfiles produced by alternative package managers;
+- do not add `packageManager` or `devEngines` to `package.json` to enforce this policy.
 
 A library must:
 

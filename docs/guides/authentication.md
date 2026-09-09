@@ -2,9 +2,7 @@
 
 English | [Русский](../ru/guides/authentication.md) | [简体中文](../zh/guides/authentication.md)
 
-This guide contains code snippets for configuring authentication with a Flight
-server listening on `localhost:8815`. See the [main guides index](./index.md)
-for discovery, downloads, streaming, and uploads.
+This guide contains code snippets for configuring authentication with a Flight server listening on `localhost:8815`. See the [main guides index](./index.md) for discovery, downloads, streaming, and uploads.
 
 ## Bearer Token
 
@@ -35,8 +33,7 @@ main().catch(console.error);
 
 ## Mutual TLS
 
-Provide the trusted root certificates and the client identity when the server
-requires mutual TLS:
+Provide the trusted root certificates and the client identity when the server requires mutual TLS:
 
 ```ts
 import fs from 'node:fs';
@@ -64,6 +61,4 @@ async function main() {
 main().catch(console.error);
 ```
 
-Certificate paths are resolved from the process working directory. The private
-key and certificate chain form one client identity and must be configured
-together.
+Certificate paths are resolved from the process working directory. The private key and certificate chain form one client identity and must be configured together.

@@ -1,6 +1,6 @@
 {
   "name": "arrow-flight-client",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Apache Arrow Flight Client for Node.js",
   "keywords": [
     "apache-arrow",
@@ -10,7 +10,7 @@
     "grpc",
     "protobuf",
     "record-batch",
-    "columnar-data"
+    "pyarrow"
   ],
   "author": {
     "name": "Stanislav Potemkin",
@@ -55,17 +55,16 @@
     "apache-arrow": "^21.1.0"
   },
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.5.0",
     "apache-arrow": "^21.1.0",
     "fwa": "^2.1.4",
-    "grpc-tools": "1.13.1",
-    "oxlint": "1.81.0",
+    "oxlint": "1.82.0",
     "oxlint-tsgolint": "^7.0.2001",
-    "ts-proto": "2.12.1",
+    "protoc": "36.0.0",
+    "ts-proto": "2.12.3",
     "typescript": "7.0.2"
   },
   "allowScripts": {
-    "grpc-tools@1.13.1": true,
-    "protobufjs@7.6.5": true
+    "protobufjs@7.6.6": true
   }
 }

@@ -2,10 +2,7 @@
 
 English | [Русский](../ru/guides/index.md) | [简体中文](../zh/guides/index.md)
 
-These consumer guides explain common `arrow-flight-client` scenarios with
-copyable TypeScript snippets. They are documentation, not self-contained
-runnable example projects. The snippets assume an Arrow Flight server
-listening on `localhost:8815`.
+These consumer guides explain common `arrow-flight-client` scenarios with copyable TypeScript snippets. They are documentation, not self-contained runnable example projects. The snippets assume an Arrow Flight server listening on `localhost:8815`.
 
 Install the client and its required Arrow peer dependency:
 
@@ -13,10 +10,7 @@ Install the client and its required Arrow peer dependency:
 npm install arrow-flight-client apache-arrow@^21.1.0
 ```
 
-The package does not include a Flight server. Descriptors, tickets, actions,
-and authentication are application-defined, so adapt those values to the
-server you are using. See also the
-[authentication guide](./authentication.md).
+The package does not include a Flight server. Descriptors, tickets, actions, and authentication are application-defined, so adapt those values to the server you are using. See also the [authentication guide](./authentication.md).
 
 ## List Flights
 
@@ -45,8 +39,7 @@ main().catch(console.error);
 
 ## Download a Table
 
-Find the first advertised endpoint with a ticket and collect its stream into
-an Arrow table:
+Find the first advertised endpoint with a ticket and collect its stream into an Arrow table:
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -77,9 +70,7 @@ main().catch(console.error);
 
 ## Stream Record Batches
 
-Use `doGet()` when the response should be consumed incrementally instead of
-collected into one table. This example stops after the first record batch;
-leaving the `for await` loop with `break` closes the reader:
+Use `doGet()` when the response should be consumed incrementally instead of collected into one table. This example stops after the first record batch; leaving the `for await` loop with `break` closes the reader:
 
 ```ts
 import { FlightClient } from 'arrow-flight-client';
@@ -117,12 +108,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-Each `FlightStreamReader` is single-use: consume it with one `for await` loop
-or one `readAll()` call. A second read, including after `break` or `cancel()`,
-fails. Call `doGet(ticket)` again when you need a new reader.
+Each `FlightStreamReader` is single-use: consume it with one `for await` loop or one `readAll()` call. A second read, including after `break` or `cancel()`, fails. Call `doGet(ticket)` again when you need a new reader.
 
-If you open a reader only to inspect its schema and do not start iteration,
-use `cancel()` to release the stream:
+If you open a reader only to inspect its schema and do not start iteration, use `cancel()` to release the stream:
 
 ```ts
 import type { FlightClient, FlightTicket } from 'arrow-flight-client';
@@ -139,13 +127,9 @@ export async function inspectSchema(client: FlightClient, ticket: FlightTicket) 
 }
 ```
 
-`cancel()` can also be called after iteration starts: it aborts a pending
-`DoGet` read, which rejects with `AbortError`, and resolves after the stream
-resources are released. Leaving a `for await` loop with `break` uses the same
-cleanup path without surfacing a cancellation error.
+`cancel()` can also be called after iteration starts: it aborts a pending `DoGet` read, which rejects with `AbortError`, and resolves after the stream resources are released. Leaving a `for await` loop with `break` uses the same cleanup path without surfacing a cancellation error.
 
-The caller still owns the client and closes it with `client.close()` when it
-has finished all calls, as in the preceding example.
+The caller still owns the client and closes it with `client.close()` when it has finished all calls, as in the preceding example.
 
 ## Upload a Table
 
@@ -181,18 +165,11 @@ async function main() {
 main().catch(console.error);
 ```
 
-`Handshake` and `DoExchange` remain available through `FlightClient.raw`, with
-their curated messages and codecs under the root `flightProtocol` namespace.
-The caller owns raw `DoExchange` Arrow IPC framing.
+`Handshake` and `DoExchange` remain available through `FlightClient.raw`, with their curated messages and codecs under the root `flightProtocol` namespace. The caller owns raw `DoExchange` Arrow IPC framing.
 
 ## Read Error Details
 
-Use `FlightCallOptions.onTrailer` to retain trailing metadata for a call,
-including when it fails. PyArrow's gRPC transport sends `FlightError.extra_info`
-as opaque bytes in `grpc-status-details-bin`, as shown in the
-[Arrow transport implementation](https://github.com/apache/arrow/blob/apache-arrow-24.0.0/cpp/src/arrow/flight/transport/grpc/util_internal.cc#L297).
-The callback receives arrays of text or binary values and must not throw.
-Store the trailers there and interpret the payload when handling the error:
+Use `FlightCallOptions.onTrailer` to retain trailing metadata for a call, including when it fails. PyArrow's gRPC transport sends `FlightError.extra_info` as opaque bytes in `grpc-status-details-bin`, as shown in the [Arrow transport implementation](https://github.com/apache/arrow/blob/apache-arrow-24.0.0/cpp/src/arrow/flight/transport/grpc/util_internal.cc#L297). The callback receives arrays of text or binary values and must not throw. Store the trailers there and interpret the payload when handling the error:
 
 ```ts
 import { FlightClient, pathDescriptor } from 'arrow-flight-client';
@@ -224,9 +201,4 @@ async function main() {
 main().catch(console.error);
 ```
 
-This example assumes the server uses UTF-8 text. If the payload is JSON,
-parse and validate it according to the server's application contract. The
-client preserves the bytes and the existing error's `code` and `details`.
-The same option is available for streaming calls and `getTable()` / `putTable()`;
-trailers arrive when the RPC finishes, not when a reader is first opened.
-Failures before a server response may have no server-provided trailers.
+This example assumes the server uses UTF-8 text. If the payload is JSON, parse and validate it according to the server's application contract. The client preserves the bytes and the existing error's `code` and `details`. The same option is available for streaming calls and `getTable()` / `putTable()`; trailers arrive when the RPC finishes, not when a reader is first opened. Failures before a server response may have no server-provided trailers.
