@@ -4,9 +4,9 @@
 
 If the change is not required, do not make it.
 
-If the change adds behavior, do not make it.
+If the change adds behavior not required by the task, do not make it.
 
-If the change removes behavior, do not make it.
+If the change removes behavior not required by the task, do not make it.
 
 If the change is made because "this is how it is usually done", do not make it.
 

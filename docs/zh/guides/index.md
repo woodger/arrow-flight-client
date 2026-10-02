@@ -108,7 +108,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-每个 `FlightStreamReader` 只能消费一次：使用一个 `for await` 循环或调用一次 `readAll()`。再次读取会失败，在 `break` 或 `cancel()` 之后也一样。 需要新的 reader 时，请再次调用 `doGet(ticket)`。
+每个 `FlightStreamReader` 只能消费一次：使用一个 `for await` 循环或调用一次 `readAll()`。再次读取会失败，在 `break` 或 `cancel()` 之后也一样。
+
+需要再次读取时，请使用有效票据发起新的 `doGet()` 调用。同一票据的重复使用遵循 [Flight 合约](../../../contracts/Flight.proto)：如果 endpoint 设置了 `expirationTime`，则可在到期前重试；否则能否重复使用由应用程序定义，可能需要新的票据。
 
 如果打开 reader 仅为查看数据模式，且不开始迭代，请使用 `cancel()` 释放流：
 

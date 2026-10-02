@@ -582,7 +582,7 @@ function prepareSignal(
 
     timeout = setTimeout(
       scheduleDeadline,
-      Math.min(remaining, MAX_TIMEOUT_DELAY)
+      Math.min(remaining, maxTimeoutDelay)
     );
     timeout.unref();
   };
@@ -608,7 +608,7 @@ function prepareSignal(
   };
 }
 
-const MAX_TIMEOUT_DELAY = 2_147_483_647;
+const maxTimeoutDelay = 2_147_483_647;
 
 function isAbortError(error: unknown): boolean {
   return typeof error === 'object'

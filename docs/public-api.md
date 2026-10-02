@@ -49,10 +49,10 @@ Collection is explicit: `getTable()` creates a complete Arrow `Table`, and `putT
 
 The client owns the conversion between Flight framing and Arrow IPC:
 
-- every `FlightData.dataHeader` contains one raw Arrow IPC `Message` flatbuffer;
+- every non-empty `FlightData.dataHeader` contains one raw Arrow IPC `Message` flatbuffer; metadata-only messages have empty `dataHeader` and `dataBody`;
 - `FlightData.dataBody` contains only the corresponding Arrow body buffers;
 - a `DoPut` descriptor is attached only to the first message;
-- client application metadata is sent as a metadata-only message immediately after the `DoPut` schema so server readers can observe it even without data;
+- non-empty client application metadata is sent as a metadata-only message immediately after the `DoPut` schema so server readers can observe it even without data;
 - a `DoGet` stream reconstructs encapsulated IPC framing before Arrow JS reads the schema, dictionary messages, and record batches;
 - body lengths are validated before data reaches the Arrow reader.
 

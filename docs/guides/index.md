@@ -108,7 +108,9 @@ async function main() {
 main().catch(console.error);
 ```
 
-Each `FlightStreamReader` is single-use: consume it with one `for await` loop or one `readAll()` call. A second read, including after `break` or `cancel()`, fails. Call `doGet(ticket)` again when you need a new reader.
+Each `FlightStreamReader` is single-use: consume it with one `for await` loop or one `readAll()` call. A second read, including after `break` or `cancel()`, fails.
+
+To read again, start a new `doGet()` call with a valid ticket. Reuse of the same ticket follows the [Flight contract](../../contracts/Flight.proto): retries are allowed before the endpoint's `expirationTime` if present; otherwise reuse is application-defined and may require a new ticket.
 
 If you open a reader only to inspect its schema and do not start iteration, use `cancel()` to release the stream:
 

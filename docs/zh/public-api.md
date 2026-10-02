@@ -49,10 +49,10 @@ Flight 响应流仍为 `AsyncIterable` 值。`listFlights()`、`doPut()`、 `doA
 
 客户端负责在 Flight 帧与 Arrow IPC 之间进行转换：
 
-- 每个 `FlightData.dataHeader` 包含一个原始 Arrow IPC `Message` flatbuffer；
+- 每个非空的 `FlightData.dataHeader` 包含一个原始 Arrow IPC `Message` flatbuffer；纯元数据消息的 `dataHeader` 和 `dataBody` 为空；
 - `FlightData.dataBody` 仅包含对应的 Arrow 数据体缓冲区；
 - `DoPut` 描述符只附加到第一条消息；
-- 客户端应用元数据在 `DoPut` 数据模式之后立即作为独立的纯元数据消息发送， 因此即使没有后续数据，服务器读取器也可以观察到该元数据；
+- 非空的客户端应用元数据在 `DoPut` 数据模式之后立即作为独立的纯元数据消息发送， 因此即使没有后续数据，服务器读取器也可以观察到该元数据；
 - `DoGet` 流会在 Arrow JS 读取数据模式、字典消息和记录批次之前恢复封装的 IPC 帧；
 - 数据进入 Arrow 读取器前会验证数据体长度。
 

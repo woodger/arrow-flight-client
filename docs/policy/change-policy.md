@@ -11,10 +11,10 @@ Forbidden:
 - large refactoring without a request
 - cleanup without justification
 - style changes outside the affected area
-- architecture changes
-- pipeline changes
-- scripts changes
-- behavior changes
+- architecture changes without a direct task requirement
+- pipeline changes without a direct task requirement
+- scripts changes without a direct task requirement
+- behavior changes without a direct task requirement
 
 Existing code is considered intentional.
 

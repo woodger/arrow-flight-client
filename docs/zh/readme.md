@@ -93,7 +93,7 @@ for await (const result of client.doPut(
 }
 ```
 
-`doPut()` 也接受同步或异步的 `RecordBatch` 可迭代对象。如果可迭代对象可能为空， 请传入 `FlightPutOptions.schema`。`putTable()` 是一个便捷方法，用于收集所有 `PutResult` 消息。设置 `FlightPutOptions.appMetadata` 后，客户端会在数据模式 之后立即将其作为独立的 Flight 元数据消息发送；即使可迭代对象为空也是如此。
+`doPut()` 也接受同步或异步的 `RecordBatch` 可迭代对象。如果可迭代对象可能为空， 请传入 `FlightPutOptions.schema`。`putTable()` 是一个便捷方法，用于收集所有 `PutResult` 消息。当 `FlightPutOptions.appMetadata` 非空时，客户端会在数据模式 之后立即将其作为独立的 Flight 元数据消息发送；即使可迭代对象为空也是如此。
 
 请限制单个记录批次的大小。同一个 `DoPut` 流中的一份逻辑负载可以跨越任意数量 的批次；客户端会逐批发送，但不会自动拆分 `RecordBatch`。
 

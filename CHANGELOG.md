@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Corrected the English, Russian, and Simplified Chinese documentation for ticket reuse, non-empty `DoPut` application metadata, and metadata-only Flight message framing.
+
 ## [0.0.17] - 2026-09-09
 
 ### Changed
