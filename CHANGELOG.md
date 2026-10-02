@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Corrected the English, Russian, and Simplified Chinese documentation for ticket reuse, non-empty `DoPut` application metadata, and metadata-only Flight message framing.
 - Made `FlightClient.close()` abort active high-level calls and release caller cancellation listeners, including for downloads opened before iteration.
+- Applied consumer backpressure to metadata-only download messages without losing message order or blocking cancellation.
 
 ## [0.0.17] - 2026-09-09
 

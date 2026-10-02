@@ -37,6 +37,7 @@ class DefaultFlightStreamReader implements FlightStreamReader {
   private eventAvailable = Promise.resolve();
   private eventIndex = 0;
   private notifyEventAvailable: (() => void) | undefined;
+  private resumeSource: (() => void) | undefined;
   private reader: RecordBatchReader | undefined;
   private sourceIterator: AsyncIterator<FlightData> | undefined;
   private streamSchema: Schema | undefined;
@@ -131,6 +132,8 @@ class DefaultFlightStreamReader implements FlightStreamReader {
     // Mark the reader finished before Arrow unwinds its pending iterator so
     // the iterator's finally block cannot start a second cancellation.
     this.finish();
+    this.resumeSource?.();
+    this.resumeSource = undefined;
 
     try {
       if (this.reader) {
@@ -277,7 +280,8 @@ class DefaultFlightStreamReader implements FlightStreamReader {
     }
   }
 
-  private pushEvent(event: FlightIpcEvent): void {
+  private async pushEvent(event: FlightIpcEvent): Promise<void> {
+    this.throwIfCancelled();
     const wasEmpty = this.eventIndex === this.events.length;
 
     if (wasEmpty) {
@@ -291,6 +295,15 @@ class DefaultFlightStreamReader implements FlightStreamReader {
       this.notifyEventAvailable?.();
       this.notifyEventAvailable = undefined;
     }
+
+    if (event.type === 'metadata') {
+      // Arrow keeps looking for a batch across metadata-only messages. Wait
+      // for consumption so a pending Arrow read cannot drain the source.
+      await new Promise<void>((resolve) => {
+        this.resumeSource = resolve;
+      });
+      this.throwIfCancelled();
+    }
   }
 
   private peekEvent(): FlightIpcEvent | undefined {
@@ -298,6 +311,11 @@ class DefaultFlightStreamReader implements FlightStreamReader {
   }
 
   private takeEvent(): void {
+    if (this.peekEvent()?.type === 'metadata') {
+      this.resumeSource?.();
+      this.resumeSource = undefined;
+    }
+
     this.eventIndex++;
 
     if (this.eventIndex === this.events.length) {

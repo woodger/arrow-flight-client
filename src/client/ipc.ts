@@ -133,14 +133,17 @@ export async function* encodeFlightData(
 
 export async function* decodeFlightData(
   source: AsyncIterable<FlightData>,
-  onEvent: (event: FlightIpcEvent) => void
+  onEvent: (event: FlightIpcEvent) => void | Promise<void>
 ): AsyncIterable<Uint8Array> {
   for await (const message of source) {
     const ipcMessage = decodeFlightIpcMessage(message);
 
     if (!ipcMessage) {
       if (message.appMetadata.byteLength !== 0) {
-        onEvent({
+        // Let Arrow's byte-stream look-ahead finish the preceding batch before
+        // waiting for the consumer to accept this metadata-only message.
+        yield Buffer.alloc(0);
+        await onEvent({
           type: 'metadata',
           appMetadata: Uint8Array.from(message.appMetadata)
         });
@@ -154,10 +157,11 @@ export async function* decodeFlightData(
       : Uint8Array.from(message.appMetadata);
 
     if (ipcMessage.isRecordBatch()) {
-      onEvent({ type: 'batch', ...(appMetadata ? { appMetadata } : {}) });
+      await onEvent({ type: 'batch', ...(appMetadata ? { appMetadata } : {}) });
     }
     else if (appMetadata) {
-      onEvent({ type: 'metadata', appMetadata });
+      yield Buffer.alloc(0);
+      await onEvent({ type: 'metadata', appMetadata });
     }
 
     yield encapsulateMessage(message.dataHeader);

@@ -66,12 +66,8 @@ describe('Flight stream reader integration', () => {
     assert.ok(batch);
 
     let releaseBatch: (() => void) | undefined;
-    let markBatchPending: (() => void) | undefined;
     const batchReleased = new Promise<void>((resolve) => {
       releaseBatch = resolve;
-    });
-    const batchPending = new Promise<void>((resolve) => {
-      markBatchPending = resolve;
     });
     const source = async function* (): AsyncIterable<FlightData> {
       yield schema;
@@ -81,14 +77,12 @@ describe('Flight stream reader integration', () => {
         dataBody: Buffer.alloc(0),
         appMetadata: Buffer.from('before-batch')
       };
-      markBatchPending?.();
       await batchReleased;
       yield batch;
     };
     const reader = await createFlightStreamReader(source(), () => undefined);
     const iterator = reader[Symbol.asyncIterator]();
     const metadataChunk = iterator.next();
-    await batchPending;
     const blocked = Symbol('blocked');
     const firstResult = await Promise.race([
       metadataChunk,
@@ -117,6 +111,134 @@ describe('Flight stream reader integration', () => {
       await iterator.next();
       await iterator.next();
     }
+  });
+
+  test('preserves metadata on schema and dictionary messages', async () => {
+    const table = tableFromArrays({ name: ['one', 'two'] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('example')),
+      table
+    )) {
+      const ipcMessage = Message.decode(message.dataHeader);
+      message.appMetadata = Buffer.from(
+        ipcMessage.isSchema() ? 'schema' : ipcMessage.isDictionaryBatch() ? 'dictionary' : 'batch'
+      );
+      messages.push(message);
+    }
+
+    const reader = await createFlightStreamReader(asAsync(messages), () => undefined);
+    const chunks = [];
+
+    for await (const chunk of reader) {
+      chunks.push(chunk);
+    }
+
+    assert.deepStrictEqual(
+      chunks.map(({ appMetadata }) => Buffer.from(appMetadata ?? []).toString()),
+      ['schema', 'dictionary', 'batch']
+    );
+    assert.deepStrictEqual(chunks.map(({ data }) => data?.numRows ?? null), [null, null, 2]);
+    assert.deepStrictEqual(chunks[2]?.data?.toArray(), table.toArray());
+  });
+
+  test('limits metadata read-ahead while consumption is paused', async () => {
+    const table = tableFromArrays({ id: [1] });
+    const messages: FlightData[] = [];
+
+    for await (const message of encodeFlightData(
+      encodeDescriptor(pathDescriptor('example')),
+      table
+    )) {
+      messages.push(message);
+    }
+
+    const schema = messages[0];
+    assert.ok(schema);
+    let metadataRead = 0;
+    let sourceClosed = false;
+    const source = async function* (): AsyncIterable<FlightData> {
+      try {
+        yield schema;
+
+        for (let index = 0; index < 1_000; index++) {
+          metadataRead++;
+          yield {
+            flightDescriptor: undefined,
+            dataHeader: Buffer.alloc(0),
+            dataBody: Buffer.alloc(0),
+            appMetadata: Buffer.from(String(index))
+          };
+        }
+
+        yield* messages.slice(1);
+      }
+      finally {
+        sourceClosed = true;
+      }
+    };
+    const reader = await createFlightStreamReader(source(), () => undefined);
+    const iterator = reader[Symbol.asyncIterator]();
+
+    try {
+      const first = await iterator.next();
+      assert.strictEqual(first.value?.data, null);
+      assert.strictEqual(Buffer.from(first.value?.appMetadata ?? []).toString(), '0');
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
+      assert.ok(metadataRead <= 2, `Read ${metadataRead} metadata messages for one request`);
+
+      for (let index = 1; index < 1_000; index++) {
+        const next = await iterator.next();
+        assert.strictEqual(next.value?.data, null);
+        assert.strictEqual(Buffer.from(next.value?.appMetadata ?? []).toString(), String(index));
+      }
+
+      assert.strictEqual((await iterator.next()).value?.data?.numRows, 1);
+      assert.strictEqual((await iterator.next()).done, true);
+      assert.strictEqual(sourceClosed, true);
+    }
+    finally {
+      await iterator.return?.(undefined);
+      await reader.cancel();
+    }
+  });
+
+  test('cancels a reader paused on metadata without draining the source', async () => {
+    const table = tableFromArrays({ id: [1] });
+    let sourceClosed = false;
+    let metadataRead = 0;
+    const source = async function* (): AsyncIterable<FlightData> {
+      try {
+        const encoded = encodeFlightData(encodeDescriptor(pathDescriptor('example')), table);
+        const schema = await encoded[Symbol.asyncIterator]().next();
+        assert.ok(schema.value);
+        yield schema.value;
+
+        for (let index = 0; index < 1_000; index++) {
+          metadataRead++;
+          yield {
+            flightDescriptor: undefined,
+            dataHeader: Buffer.alloc(0),
+            dataBody: Buffer.alloc(0),
+            appMetadata: Buffer.from('metadata')
+          };
+        }
+      }
+      finally {
+        sourceClosed = true;
+      }
+    };
+    const reader = await createFlightStreamReader(source(), () => undefined);
+    const iterator = reader[Symbol.asyncIterator]();
+    await iterator.next();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    await reader.cancel();
+
+    assert.ok(metadataRead <= 2);
+    assert.strictEqual(sourceClosed, true);
+    await assert.rejects(iterator.next(), { name: 'AbortError' });
   });
 
   test('finishes after the response stream is consumed', async () => {
