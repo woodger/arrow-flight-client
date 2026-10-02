@@ -60,7 +60,7 @@ Callers should not construct these fields when using the package root. The IPC a
 
 ## Lifecycle And Calls
 
-`FlightClient` owns one gRPC channel. `close()` is idempotent, and new high-level calls are rejected after closure. Client metadata applies to every call; per-call metadata replaces matching configured keys, and an empty value array removes a configured key for that call. High-level calls support an `AbortSignal` and an absolute `Date` deadline. Caller cancellation rejects with `AbortError`; high-level deadline expiry rejects with a nice-grpc `ClientError` whose code is `DEADLINE_EXCEEDED`.
+`FlightClient` owns one gRPC channel. `close()` is idempotent, aborts active high-level calls with `AbortError`, and rejects new high-level calls after closure. This also cancels an opened `DoGet` whose reader has not started iteration. Client metadata applies to every call; per-call metadata replaces matching configured keys, and an empty value array removes a configured key for that call. High-level calls support an `AbortSignal` and an absolute `Date` deadline. Caller cancellation rejects with `AbortError`; high-level deadline expiry rejects with a nice-grpc `ClientError` whose code is `DEADLINE_EXCEEDED`.
 
 `FlightCallOptions.onTrailer` exposes received trailing metadata, including for failed calls, as project-owned `FlightResponseMetadata`. Values are arrays of strings or copied `Uint8Array` values. Transport errors retain their existing `ClientError` type, `code`, and `details`. See the [error detail example](./guides/index.md#read-error-details) for accessing PyArrow `FlightError.extra_info` without decoding application payloads in the transport layer.
 

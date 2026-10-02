@@ -60,7 +60,7 @@ Flight 响应流仍为 `AsyncIterable` 值。`listFlights()`、`doPut()`、 `doA
 
 ## 生命周期与调用
 
-`FlightClient` 拥有一个 gRPC 通道。`close()` 是幂等的，客户端关闭后发起的 高级调用会被拒绝。客户端元数据应用于每次调用；单次调用的元数据会替换同名 配置值，空值数组则会在该次调用中删除对应的已配置键。高级调用支持 `AbortSignal` 和绝对 `Date` 截止时间。调用方取消时以 `AbortError` 拒绝； 高级调用截止时间到期时则以 `nice-grpc` 的 `ClientError` 拒绝，其错误码为 `DEADLINE_EXCEEDED`。
+`FlightClient` 拥有一个 gRPC 通道。`close()` 是幂等的，会以 `AbortError` 中止活动的高级调用，并拒绝客户端关闭后发起的高级调用。这也会取消已打开但尚未开始迭代的 `DoGet`。客户端元数据应用于每次调用；单次调用的元数据会替换同名 配置值，空值数组则会在该次调用中删除对应的已配置键。高级调用支持 `AbortSignal` 和绝对 `Date` 截止时间。调用方取消时以 `AbortError` 拒绝； 高级调用截止时间到期时则以 `nice-grpc` 的 `ClientError` 拒绝，其错误码为 `DEADLINE_EXCEEDED`。
 
 `FlightCallOptions.onTrailer` 通过项目定义的 `FlightResponseMetadata` 提供收到的 尾随元数据，包括调用失败时的元数据。每个值都是字符串或复制后的 `Uint8Array` 组成的数组。传输错误保留原有的 `ClientError` 类型、`code` 和 `details`。 参见[读取错误详情示例](./guides/index.md#读取错误详情)，了解如何访问 PyArrow `FlightError.extra_info`，而不在传输层解码应用数据。
 

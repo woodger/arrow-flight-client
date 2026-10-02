@@ -56,6 +56,7 @@ import type {
 
 interface PreparedCall {
   readonly options: CallOptions
+  readonly cancel: () => void
   readonly dispose: () => void
   readonly ensureActive: () => void
   readonly normalizeError: (error: unknown) => unknown
@@ -66,7 +67,7 @@ type FlightMethodName = keyof typeof FlightServiceDefinition.methods;
 export class FlightClient {
   private readonly channel: Channel;
   private readonly client: FlightRawClient;
-  private readonly callDisposers = new Set<() => void>();
+  private readonly callCancellations = new Set<() => void>();
   private closed = false;
   private closePromise: Promise<void> | undefined;
 
@@ -195,42 +196,23 @@ export class FlightClient {
   ): Promise<FlightStreamReader> {
     this.assertOpen();
     const call = this.prepareCall(options, 'doGet');
-    // AsyncIterator.return() waits behind an outstanding next(). Give the
-    // reader a transport signal so cancellation can interrupt that read first.
-    const readerController = new AbortController();
-    const callSignal = call.options.signal;
-    const abortReader = () => { readerController.abort(); };
-    const dispose = () => {
-      callSignal?.removeEventListener('abort', abortReader);
-      call.dispose();
-    };
-
-    if (callSignal?.aborted) {
-      abortReader();
-    }
-    else {
-      callSignal?.addEventListener('abort', abortReader, { once: true });
-    }
 
     try {
       return await createFlightStreamReader(
         normalizeStreamErrors(
           this.client.doGet(
             { ticket: Buffer.from(ticket) },
-            {
-              ...call.options,
-              signal: readerController.signal
-            }
+            call.options
           ),
           call.ensureActive,
           call.normalizeError
         ),
-        dispose,
-        abortReader
+        call.dispose,
+        call.cancel
       );
     }
     catch (error) {
-      dispose();
+      call.dispose();
       throw call.normalizeError(error);
     }
   }
@@ -315,8 +297,8 @@ export class FlightClient {
     if (!this.closePromise) {
       this.closed = true;
 
-      for (const dispose of [...this.callDisposers]) {
-        dispose();
+      for (const cancel of [...this.callCancellations]) {
+        cancel();
       }
 
       this.closePromise = Promise.resolve().then(() => this.channel.close());
@@ -366,20 +348,22 @@ export class FlightClient {
     methodName: FlightMethodName
   ): PreparedCall {
     const prepared = prepareCall(options, methodName);
-    const managedSignal = options.deadline
-      ? prepared.options.signal
-      : undefined;
+    const managedSignal = prepared.options.signal;
     let disposed = false;
     const dispose = () => {
       if (!disposed) {
         disposed = true;
         managedSignal?.removeEventListener('abort', dispose);
         prepared.dispose();
-        this.callDisposers.delete(dispose);
+        this.callCancellations.delete(cancel);
       }
     };
+    const cancel = () => {
+      prepared.cancel();
+      dispose();
+    };
 
-    this.callDisposers.add(dispose);
+    this.callCancellations.add(cancel);
     managedSignal?.addEventListener('abort', dispose, { once: true });
 
     if (managedSignal?.aborted) {
@@ -388,6 +372,7 @@ export class FlightClient {
 
     return {
       ...prepared,
+      cancel,
       dispose
     };
   }
@@ -431,9 +416,7 @@ function prepareCall(
     callOptions.metadata = metadata;
     setMetadataOverrideKeys(callOptions, options.metadata ?? {});
   }
-  if (preparedSignal.signal) {
-    callOptions.signal = preparedSignal.signal;
-  }
+  callOptions.signal = preparedSignal.signal;
   const onTrailer = options.onTrailer;
 
   if (onTrailer) {
@@ -464,9 +447,10 @@ function prepareCall(
 
   return {
     options: callOptions,
+    cancel: preparedSignal.cancel,
     dispose: preparedSignal.dispose,
     ensureActive: () => {
-      if (preparedSignal.signal?.aborted) {
+      if (preparedSignal.signal.aborted) {
         throw normalizeError(createAbortError());
       }
     },
@@ -531,26 +515,19 @@ function prepareSignal(
   signal: AbortSignal | undefined,
   deadline: Date | undefined
 ): {
-  readonly signal?: AbortSignal
+  readonly signal: AbortSignal
+  readonly cancel: () => void
   readonly dispose: () => void
   readonly deadlineExceeded: () => boolean
 } {
-  if (!deadline) {
-    return {
-      ...(signal ? { signal } : {}),
-      dispose: () => undefined,
-      deadlineExceeded: () => false
-    };
-  }
+  const deadlineTime = deadline?.getTime();
 
-  const deadlineTime = deadline.getTime();
-
-  if (!Number.isFinite(deadlineTime)) {
+  if (deadlineTime !== undefined && !Number.isFinite(deadlineTime)) {
     throw new RangeError('Flight call deadline must be a valid Date');
   }
 
   const controller = new AbortController();
-  let cancellationSource: 'caller' | 'deadline' | undefined;
+  let deadlineExpired = false;
   let timeout: NodeJS.Timeout | undefined;
   const clearDeadlineTimer = () => {
     if (timeout) {
@@ -558,21 +535,24 @@ function prepareSignal(
       timeout = undefined;
     }
   };
-  const abortForCaller = () => {
+  const cancel = () => {
     if (!controller.signal.aborted) {
-      cancellationSource = 'caller';
       clearDeadlineTimer();
       controller.abort();
     }
   };
   const abortForDeadline = () => {
     if (!controller.signal.aborted) {
-      cancellationSource = 'deadline';
-      signal?.removeEventListener('abort', abortForCaller);
+      deadlineExpired = true;
+      signal?.removeEventListener('abort', cancel);
       controller.abort();
     }
   };
   const scheduleDeadline = () => {
+    if (deadlineTime === undefined) {
+      return;
+    }
+
     const remaining = deadlineTime - Date.now();
 
     if (remaining <= 0) {
@@ -588,23 +568,24 @@ function prepareSignal(
   };
 
   if (signal?.aborted) {
-    abortForCaller();
+    cancel();
   }
-  else if (deadlineTime <= Date.now()) {
+  else if (deadlineTime !== undefined && deadlineTime <= Date.now()) {
     abortForDeadline();
   }
   else {
-    signal?.addEventListener('abort', abortForCaller, { once: true });
+    signal?.addEventListener('abort', cancel, { once: true });
     scheduleDeadline();
   }
 
   return {
     signal: controller.signal,
+    cancel,
     dispose: () => {
       clearDeadlineTimer();
-      signal?.removeEventListener('abort', abortForCaller);
+      signal?.removeEventListener('abort', cancel);
     },
-    deadlineExceeded: () => cancellationSource === 'deadline'
+    deadlineExceeded: () => deadlineExpired
   };
 }
 
