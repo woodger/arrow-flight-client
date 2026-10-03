@@ -196,7 +196,7 @@ npm run build
 PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
-Исходный Flight-контракт находится в [`contracts/Flight.proto`](../../contracts/Flight.proto). [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/generated/Flight.ts) является сгенерированным кодом и не должен редактироваться вручную. Правила разработки и ревью описаны в [политиках проекта](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), а история релизов ведётся в [changelog](../../CHANGELOG.md).
+Исходный Flight-контракт находится в [`contracts/Flight.proto`](../../contracts/Flight.proto). [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/generated/Flight.ts) является сгенерированным кодом и не должен редактироваться вручную. Правила разработки и ревью описаны в [политиках проекта](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), а история релизов ведётся в [changelog](../../CHANGELOG.md).
 
 ## Отказ от ответственности
 

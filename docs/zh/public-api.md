@@ -4,7 +4,7 @@
 
 > 类型：设计。本文档记录 Node.js Arrow Flight 客户端的边界和稳定性决策。
 
-包入口映射由 [`package.json`](../../package.json) 定义。根源码导出面以及经过 筛选的底层协议命名空间分别由 [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/index.ts) 和 [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/flight-protocol.ts) 定义。可观察的数据流行为由与 [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.17/src/client) 源码放置在一起的测试保护，而传输合约仍由 [`contracts/Flight.proto`](../../contracts/Flight.proto) 定义。
+包入口映射由 [`package.json`](../../package.json) 定义。根源码导出面以及经过 筛选的底层协议命名空间分别由 [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/index.ts) 和 [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/flight-protocol.ts) 定义。可观察的数据流行为由与 [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.18/src/client) 源码放置在一起的测试保护，而传输合约仍由 [`contracts/Flight.proto`](../../contracts/Flight.proto) 定义。
 
 ## API 边界
 

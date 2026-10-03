@@ -6,11 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.0.18] - 2026-10-03
+
 ### Fixed
 
 - Corrected the English, Russian, and Simplified Chinese documentation for ticket reuse, non-empty `DoPut` application metadata, and metadata-only Flight message framing.
 - Made `FlightClient.close()` abort active high-level calls and release caller cancellation listeners, including for downloads opened before iteration.
 - Applied consumer backpressure to metadata-only download messages without losing message order or blocking cancellation.
+
+### Security
+
+- Raised the minimum `@grpc/grpc-js` runtime version to `1.14.5`, which includes upstream fixes for server authentication and error-message disclosure.
 
 ## [0.0.17] - 2026-09-09
 
@@ -204,7 +210,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added Arrow table upload and download examples.
 - Added initial unit and mock integration tests.
 
-[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/0.0.17...HEAD
+[Unreleased]: https://github.com/woodger/arrow-flight-client/compare/0.0.18...HEAD
+[0.0.18]: https://github.com/woodger/arrow-flight-client/compare/0.0.17...0.0.18
 [0.0.17]: https://github.com/woodger/arrow-flight-client/compare/0.0.16...0.0.17
 [0.0.16]: https://github.com/woodger/arrow-flight-client/compare/0.0.15...0.0.16
 [0.0.15]: https://github.com/woodger/arrow-flight-client/compare/0.0.14...0.0.15

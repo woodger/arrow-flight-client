@@ -4,7 +4,7 @@ English | [Русский](ru/public-api.md) | [简体中文](zh/public-api.md)
 
 > Type: Design. This document records the boundary and stability decisions for the Node.js Arrow Flight client.
 
-The package entrypoint map is defined by [`package.json`](../package.json). The root source surface and its curated low-level protocol namespace are [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/index.ts) and [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/flight-protocol.ts). Observable stream behavior is protected by tests colocated with [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.17/src/client), while the wire contract remains [`contracts/Flight.proto`](../contracts/Flight.proto).
+The package entrypoint map is defined by [`package.json`](../package.json). The root source surface and its curated low-level protocol namespace are [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/index.ts) and [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/flight-protocol.ts). Observable stream behavior is protected by tests colocated with [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.18/src/client), while the wire contract remains [`contracts/Flight.proto`](../contracts/Flight.proto).
 
 ## API Boundary
 

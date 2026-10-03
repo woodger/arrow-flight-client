@@ -196,7 +196,7 @@ npm run build
 PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
-Flight 协议源文件是 [`contracts/Flight.proto`](../../contracts/Flight.proto)。 [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/generated/Flight.ts) 是生成代码，不应手动编辑。开发和评审规则记录在 [项目策略](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md) 中，发布历史记录在 [changelog](../../CHANGELOG.md) 中。
+Flight 协议源文件是 [`contracts/Flight.proto`](../../contracts/Flight.proto)。 [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/generated/Flight.ts) 是生成代码，不应手动编辑。开发和评审规则记录在 [项目策略](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md) 中，发布历史记录在 [changelog](../../CHANGELOG.md) 中。
 
 ## 免责声明
 
