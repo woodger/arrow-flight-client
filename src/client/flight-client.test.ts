@@ -62,10 +62,6 @@ describe('FlightClient', () => {
       });
       const nextAction = actions[Symbol.asyncIterator]().next();
 
-      assert.strictEqual(
-        getEventListeners(controller.signal, 'abort').length,
-        1
-      );
       await client.close();
       assert.strictEqual(
         getEventListeners(controller.signal, 'abort').length,

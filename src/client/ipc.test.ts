@@ -6,6 +6,7 @@ import {
   Table,
   tableFromArrays
 } from 'apache-arrow';
+import type { Float64 } from 'apache-arrow';
 import { decodeFlightData, encodeFlightData, FlightProtocolError } from './ipc';
 import { encodeDescriptor } from './protocol';
 import { pathDescriptor } from './types';
@@ -128,11 +129,20 @@ describe('Flight IPC adapter', () => {
       messages.push(message);
     }
 
-    const batchCount = messages.filter(({ dataHeader }) => (
-      Message.decode(dataHeader).isRecordBatch()
-    )).length;
+    const reader = await RecordBatchReader.from<{ id: Float64 }>(
+      decodeFlightData(asAsync(messages), () => undefined)
+    );
+    const batches = [];
 
-    assert.strictEqual(batchCount, 2);
+    for await (const decodedBatch of reader) {
+      batches.push(decodedBatch);
+    }
+
+    assert.deepStrictEqual(batches.map(({ numRows }) => numRows), [1, 1]);
+    assert.deepStrictEqual(
+      batches.map((decodedBatch) => Array.from(decodedBatch.getChild('id') ?? [])),
+      [[1], [2]]
+    );
   });
 
   test('writes application metadata separately after the schema', async () => {

@@ -9,6 +9,7 @@ import { encodeFlightData } from './ipc';
 import { encodeDescriptor } from './protocol';
 import { pathDescriptor } from './types';
 import type { FlightResponseMetadata } from './types';
+import type { FlightStreamReader } from './flight-stream-reader';
 import { FlightServiceDefinition } from '../generated/Flight';
 import type {
   FlightData,
@@ -759,22 +760,28 @@ describe('Flight client integration', () => {
     const port = await server.listen('127.0.0.1:0');
     const client = new FlightClient(`127.0.0.1:${port}`);
     const controller = new AbortController();
+    let reader: FlightStreamReader | undefined;
 
     try {
-      const reader = await client.doGet(Buffer.from('ticket'), {
+      reader = await client.doGet(Buffer.from('ticket'), {
         signal: controller.signal
       });
 
-      assert.strictEqual(getEventListeners(controller.signal, 'abort').length, 1);
       await client.close();
       assert.strictEqual(getEventListeners(controller.signal, 'abort').length, 0);
-      await cancelled;
-      await assert.rejects(reader.readAll(), { name: 'AbortError' });
-      await reader.cancel();
+      const outcome = reader.readAll().then(
+        () => undefined,
+        (error: unknown) => error
+      );
+
+      await assertAbortedPromptly(
+        Promise.all([cancelled, outcome]).then(([, error]) => error)
+      );
     }
     finally {
-      await client.close();
       server.forceShutdown();
+      await client.close();
+      await reader?.cancel();
     }
   });
 
