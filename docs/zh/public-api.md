@@ -4,7 +4,7 @@
 
 > 类型：设计。本文档记录 Node.js Arrow Flight 客户端的边界和稳定性决策。
 
-包入口映射由 [`package.json`](../../package.json) 定义。根源码导出面以及经过 筛选的底层协议命名空间分别由 [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/index.ts) 和 [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/flight-protocol.ts) 定义。可观察的数据流行为由与 [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.17/src/client) 源码放置在一起的测试保护，而传输合约仍由 [`contracts/Flight.proto`](../../contracts/Flight.proto) 定义。
+包入口映射由 [`package.json`](../../package.json) 定义。根源码导出面以及经过 筛选的底层协议命名空间分别由 [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/index.ts) 和 [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/flight-protocol.ts) 定义。可观察的数据流行为由与 [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.18/src/client) 源码放置在一起的测试保护，而传输合约仍由 [`contracts/Flight.proto`](../../contracts/Flight.proto) 定义。
 
 ## API 边界
 
@@ -41,7 +41,7 @@ type RawClient = flightProtocol.FlightRawClient;
 
 ## 流式模型
 
-Flight 响应流仍为 `AsyncIterable` 值。`listFlights()`、`doPut()`、 `doAction()` 和 `listActions()` 不会收集响应。`doGet()` 返回只能消费一次的 `FlightStreamReader`，以保持记录批次与其应用元数据之间的关联，并避免丢弃 仅包含元数据的消息。`FlightStreamReader.cancel()` 会中止活动的 `DoGet`，并在 流资源释放后完成。正在进行的读取会以 `AbortError` 拒绝。
+Flight 响应流仍为 `AsyncIterable` 值。`listFlights()`、`doPut()`、 `doAction()` 和 `listActions()` 不会收集响应。`doGet()` 返回只能消费一次的 `FlightStreamReader`，以保持记录批次与其应用元数据之间的关联，并避免丢弃 仅包含元数据的消息。在迭代期间，仅包含元数据的消息会按消费方的速度逐步读取。`FlightStreamReader.cancel()` 会中止活动的 `DoGet`，并在 流资源释放后完成。正在进行的读取会以 `AbortError` 拒绝。
 
 结果收集必须显式进行：`getTable()` 创建完整的 Arrow `Table`，而 `putTable()` 收集服务器返回的所有 `PutResult` 消息。
 
@@ -49,10 +49,10 @@ Flight 响应流仍为 `AsyncIterable` 值。`listFlights()`、`doPut()`、 `doA
 
 客户端负责在 Flight 帧与 Arrow IPC 之间进行转换：
 
-- 每个 `FlightData.dataHeader` 包含一个原始 Arrow IPC `Message` flatbuffer；
+- 每个非空的 `FlightData.dataHeader` 包含一个原始 Arrow IPC `Message` flatbuffer；纯元数据消息的 `dataHeader` 和 `dataBody` 为空；
 - `FlightData.dataBody` 仅包含对应的 Arrow 数据体缓冲区；
 - `DoPut` 描述符只附加到第一条消息；
-- 客户端应用元数据在 `DoPut` 数据模式之后立即作为独立的纯元数据消息发送， 因此即使没有后续数据，服务器读取器也可以观察到该元数据；
+- 非空的客户端应用元数据在 `DoPut` 数据模式之后立即作为独立的纯元数据消息发送， 因此即使没有后续数据，服务器读取器也可以观察到该元数据；
 - `DoGet` 流会在 Arrow JS 读取数据模式、字典消息和记录批次之前恢复封装的 IPC 帧；
 - 数据进入 Arrow 读取器前会验证数据体长度。
 
@@ -60,7 +60,7 @@ Flight 响应流仍为 `AsyncIterable` 值。`listFlights()`、`doPut()`、 `doA
 
 ## 生命周期与调用
 
-`FlightClient` 拥有一个 gRPC 通道。`close()` 是幂等的，客户端关闭后发起的 高级调用会被拒绝。客户端元数据应用于每次调用；单次调用的元数据会替换同名 配置值，空值数组则会在该次调用中删除对应的已配置键。高级调用支持 `AbortSignal` 和绝对 `Date` 截止时间。调用方取消时以 `AbortError` 拒绝； 高级调用截止时间到期时则以 `nice-grpc` 的 `ClientError` 拒绝，其错误码为 `DEADLINE_EXCEEDED`。
+`FlightClient` 拥有一个 gRPC 通道。`close()` 是幂等的，会以 `AbortError` 中止活动的高级调用，并拒绝客户端关闭后发起的高级调用。这也会取消已打开但尚未开始迭代的 `DoGet`。客户端元数据应用于每次调用；单次调用的元数据会替换同名 配置值，空值数组则会在该次调用中删除对应的已配置键。高级调用支持 `AbortSignal` 和绝对 `Date` 截止时间。调用方取消时以 `AbortError` 拒绝； 高级调用截止时间到期时则以 `nice-grpc` 的 `ClientError` 拒绝，其错误码为 `DEADLINE_EXCEEDED`。
 
 `FlightCallOptions.onTrailer` 通过项目定义的 `FlightResponseMetadata` 提供收到的 尾随元数据，包括调用失败时的元数据。每个值都是字符串或复制后的 `Uint8Array` 组成的数组。传输错误保留原有的 `ClientError` 类型、`code` 和 `details`。 参见[读取错误详情示例](./guides/index.md#读取错误详情)，了解如何访问 PyArrow `FlightError.extra_info`，而不在传输层解码应用数据。
 

@@ -24,11 +24,11 @@ Navigation documents must help find the source of truth, not become a second REA
 ## Project Sources Of Truth
 
 - package metadata, supported Node.js version, dependencies, entrypoints, and scripts: [`package.json`](../../package.json);
-- public package surface and curated low-level protocol namespace: [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/index.ts) and [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/flight-protocol.ts);
-- client behavior: [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.17/src/client);
+- public package surface and curated low-level protocol namespace: [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/index.ts) and [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/flight-protocol.ts);
+- client behavior: [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.18/src/client);
 - Flight wire contract: [`contracts/Flight.proto`](../../contracts/Flight.proto);
-- generated TypeScript bindings: [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/generated/Flight.ts);
-- compiler settings: [`tsconfig.json`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/tsconfig.json);
+- generated TypeScript bindings: [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/generated/Flight.ts);
+- compiler settings: [`tsconfig.json`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/tsconfig.json);
 - lint configuration: [`.oxlintrc.json`](https://github.com/woodger/arrow-flight-client/blob/main/.oxlintrc.json);
 - observable behavior: tests colocated with source files under `src/`.
 

@@ -96,7 +96,7 @@ export type FlightDataSource =
 export interface FlightPutOptions extends FlightCallOptions {
   /** Required to upload an empty iterable. A Table already carries its schema. */
   schema?: Schema
-  /** Application metadata sent once when the DoPut stream is opened. */
+  /** Non-empty application metadata sent once after the DoPut schema. */
   appMetadata?: Uint8Array
 }
 

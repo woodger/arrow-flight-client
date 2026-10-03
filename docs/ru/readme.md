@@ -93,7 +93,7 @@ for await (const result of client.doPut(
 }
 ```
 
-`doPut()` также принимает синхронные и асинхронные итерируемые коллекции `RecordBatch`. Передавайте `FlightPutOptions.schema`, если такая коллекция может быть пустой. `putTable()` — вспомогательный метод, который собирает все сообщения `PutResult`. Если задано `FlightPutOptions.appMetadata`, клиент отправляет метаданные отдельным сообщением Flight сразу после схемы, в том числе для пустой коллекции.
+`doPut()` также принимает синхронные и асинхронные итерируемые коллекции `RecordBatch`. Передавайте `FlightPutOptions.schema`, если такая коллекция может быть пустой. `putTable()` — вспомогательный метод, который собирает все сообщения `PutResult`. Если `FlightPutOptions.appMetadata` непустое, клиент отправляет метаданные отдельным сообщением Flight сразу после схемы, в том числе для пустой коллекции.
 
 Ограничивайте размер отдельных объектов `RecordBatch`. Одна логическая полезная нагрузка может занимать любое количество пакетов в одном потоке `DoPut`: клиент передаёт их последовательно, но не разбивает `RecordBatch` автоматически.
 
@@ -196,7 +196,7 @@ npm run build
 PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
-Исходный Flight-контракт находится в [`contracts/Flight.proto`](../../contracts/Flight.proto). [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/generated/Flight.ts) является сгенерированным кодом и не должен редактироваться вручную. Правила разработки и ревью описаны в [политиках проекта](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), а история релизов ведётся в [changelog](../../CHANGELOG.md).
+Исходный Flight-контракт находится в [`contracts/Flight.proto`](../../contracts/Flight.proto). [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/generated/Flight.ts) является сгенерированным кодом и не должен редактироваться вручную. Правила разработки и ревью описаны в [политиках проекта](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), а история релизов ведётся в [changelog](../../CHANGELOG.md).
 
 ## Отказ от ответственности
 

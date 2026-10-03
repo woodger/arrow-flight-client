@@ -61,7 +61,7 @@ Example of an incorrect change:
 
 If stale artifacts remain in build output after files are moved, they must be removed narrowly and explicitly as part of that specific operation, not by changing the project's permanent build/test pipeline.
 
-Apart from the established stale-test pruning described above, file deletion is allowed only when the task explicitly requests it.
+Apart from the established stale-test pruning and narrow, explicit removal of stale build artifacts after source files are moved, file deletion is allowed only when the task explicitly requests it.
 
 ## Additional Examples
 

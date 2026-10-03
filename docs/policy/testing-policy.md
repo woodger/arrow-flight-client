@@ -34,7 +34,7 @@ The command contract lives in [`package.json`](../../package.json). `fwa --prune
 
 The published client supports the Node.js range declared in `package.json`. Repository development requires Node.js `^20.19.0 || >=22.12.0`, the combined supported range of the required development tools.
 
-The live PyArrow compatibility suite is deliberately separate from the unit-test command. It requires the pinned dependency in [`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/test/pyarrow/requirements.txt) and runs after compilation with:
+The live PyArrow compatibility suite is deliberately separate from the unit-test command. It requires the pinned dependency in [`test/pyarrow/requirements.txt`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/test/pyarrow/requirements.txt) and runs after compilation with:
 
 ```sh
 npm run test:pyarrow

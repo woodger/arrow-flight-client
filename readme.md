@@ -93,7 +93,7 @@ for await (const result of client.doPut(
 }
 ```
 
-`doPut()` also accepts synchronous and asynchronous `RecordBatch` iterables. Pass `FlightPutOptions.schema` when an iterable may be empty. `putTable()` is a convenience method that collects all `PutResult` messages. When `FlightPutOptions.appMetadata` is present, the client sends it as a standalone Flight metadata message immediately after the schema, including for an empty iterable.
+`doPut()` also accepts synchronous and asynchronous `RecordBatch` iterables. Pass `FlightPutOptions.schema` when an iterable may be empty. `putTable()` is a convenience method that collects all `PutResult` messages. When `FlightPutOptions.appMetadata` is non-empty, the client sends it as a standalone Flight metadata message immediately after the schema, including for an empty iterable.
 
 Keep individual record batches bounded. One logical payload may span any number of batches in the same `DoPut` stream; the client streams them incrementally but does not split a `RecordBatch` automatically.
 
@@ -196,7 +196,7 @@ npm run build
 PYTHON="$PYARROW_VENV/bin/python" npm run test:pyarrow
 ```
 
-The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto). [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/generated/Flight.ts) is generated code and must not be edited manually. Development and review rules are documented in the [project policies](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), and release history is maintained in the [changelog](./CHANGELOG.md).
+The Flight protocol source is [`contracts/Flight.proto`](./contracts/Flight.proto). [`src/generated/Flight.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/generated/Flight.ts) is generated code and must not be edited manually. Development and review rules are documented in the [project policies](https://github.com/woodger/arrow-flight-client/blob/main/docs/policy/index.md), and release history is maintained in the [changelog](./CHANGELOG.md).
 
 ## Disclaimer
 

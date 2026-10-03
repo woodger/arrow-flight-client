@@ -3,7 +3,7 @@
  *
  * Allowed here:
  * - asserting root-level runtime export names;
- * - compiling imports of root-level type contracts;
+ * - compiling root-level type contracts;
  * - verifying namespace wiring at the source module boundary.
  *
  * This file must not verify manifest or filesystem wiring or repeat behavior
@@ -13,7 +13,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import * as packageExports from './index';
-import type {
+export type {
   FlightAction,
   FlightActionResult,
   FlightActionType,
@@ -38,33 +38,6 @@ import type {
 } from './index';
 import { FlightServiceDefinition } from './flight-protocol';
 
-type RootClientTypeContracts = [
-  FlightAction,
-  FlightActionResult,
-  FlightActionType,
-  FlightCallOptions,
-  FlightClientOptions,
-  FlightCommandDescriptor,
-  FlightDataSource,
-  FlightDescriptor,
-  FlightEndpoint,
-  FlightInfo,
-  FlightMetadata,
-  FlightMetadataValue,
-  FlightPathDescriptor,
-  FlightPollInfo,
-  FlightPutOptions,
-  FlightPutResult,
-  FlightResponseMetadata,
-  FlightStreamChunk,
-  FlightStreamReader,
-  FlightTicket,
-  FlightTlsOptions
-];
-
-const expectedRootClientTypeContractCount: RootClientTypeContracts['length'] =
-  21;
-
 const runtimeExportNames = [
   'FlightClient',
   'FlightProtocolError',
@@ -83,10 +56,6 @@ describe('source facade', () => {
       Object.keys(packageExports).sort(),
       [...runtimeExportNames].sort()
     );
-  });
-
-  test('exposes public client type contracts', () => {
-    assert.strictEqual(expectedRootClientTypeContractCount, 21);
   });
 
   test('exposes the Flight protocol facade', () => {

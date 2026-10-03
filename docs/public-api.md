@@ -4,7 +4,7 @@ English | [Русский](ru/public-api.md) | [简体中文](zh/public-api.md)
 
 > Type: Design. This document records the boundary and stability decisions for the Node.js Arrow Flight client.
 
-The package entrypoint map is defined by [`package.json`](../package.json). The root source surface and its curated low-level protocol namespace are [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/index.ts) and [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.17/src/flight-protocol.ts). Observable stream behavior is protected by tests colocated with [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.17/src/client), while the wire contract remains [`contracts/Flight.proto`](../contracts/Flight.proto).
+The package entrypoint map is defined by [`package.json`](../package.json). The root source surface and its curated low-level protocol namespace are [`src/index.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/index.ts) and [`src/flight-protocol.ts`](https://github.com/woodger/arrow-flight-client/blob/0.0.18/src/flight-protocol.ts). Observable stream behavior is protected by tests colocated with [`src/client/`](https://github.com/woodger/arrow-flight-client/tree/0.0.18/src/client), while the wire contract remains [`contracts/Flight.proto`](../contracts/Flight.proto).
 
 ## API Boundary
 
@@ -41,7 +41,7 @@ The former `FlightGrpcClient` alias and generated `FlightServiceClient` type bot
 
 ## Streaming Model
 
-Flight response streams remain `AsyncIterable` values. `listFlights()`, `doPut()`, `doAction()`, and `listActions()` do not collect responses. `doGet()` returns a single-use `FlightStreamReader` so a record batch and its application metadata remain associated and metadata-only messages are not discarded. `FlightStreamReader.cancel()` aborts an active `DoGet` and resolves after its stream resources are released. An in-progress read rejects with `AbortError`.
+Flight response streams remain `AsyncIterable` values. `listFlights()`, `doPut()`, `doAction()`, and `listActions()` do not collect responses. `doGet()` returns a single-use `FlightStreamReader` so a record batch and its application metadata remain associated and metadata-only messages are not discarded. During iteration, metadata-only messages are read incrementally at the consumer's pace. `FlightStreamReader.cancel()` aborts an active `DoGet` and resolves after its stream resources are released. An in-progress read rejects with `AbortError`.
 
 Collection is explicit: `getTable()` creates a complete Arrow `Table`, and `putTable()` collects all server `PutResult` messages.
 
@@ -49,10 +49,10 @@ Collection is explicit: `getTable()` creates a complete Arrow `Table`, and `putT
 
 The client owns the conversion between Flight framing and Arrow IPC:
 
-- every `FlightData.dataHeader` contains one raw Arrow IPC `Message` flatbuffer;
+- every non-empty `FlightData.dataHeader` contains one raw Arrow IPC `Message` flatbuffer; metadata-only messages have empty `dataHeader` and `dataBody`;
 - `FlightData.dataBody` contains only the corresponding Arrow body buffers;
 - a `DoPut` descriptor is attached only to the first message;
-- client application metadata is sent as a metadata-only message immediately after the `DoPut` schema so server readers can observe it even without data;
+- non-empty client application metadata is sent as a metadata-only message immediately after the `DoPut` schema so server readers can observe it even without data;
 - a `DoGet` stream reconstructs encapsulated IPC framing before Arrow JS reads the schema, dictionary messages, and record batches;
 - body lengths are validated before data reaches the Arrow reader.
 
@@ -60,7 +60,7 @@ Callers should not construct these fields when using the package root. The IPC a
 
 ## Lifecycle And Calls
 
-`FlightClient` owns one gRPC channel. `close()` is idempotent, and new high-level calls are rejected after closure. Client metadata applies to every call; per-call metadata replaces matching configured keys, and an empty value array removes a configured key for that call. High-level calls support an `AbortSignal` and an absolute `Date` deadline. Caller cancellation rejects with `AbortError`; high-level deadline expiry rejects with a nice-grpc `ClientError` whose code is `DEADLINE_EXCEEDED`.
+`FlightClient` owns one gRPC channel. `close()` is idempotent, aborts active high-level calls with `AbortError`, and rejects new high-level calls after closure. This also cancels an opened `DoGet` whose reader has not started iteration. Client metadata applies to every call; per-call metadata replaces matching configured keys, and an empty value array removes a configured key for that call. High-level calls support an `AbortSignal` and an absolute `Date` deadline. Caller cancellation rejects with `AbortError`; high-level deadline expiry rejects with a nice-grpc `ClientError` whose code is `DEADLINE_EXCEEDED`.
 
 `FlightCallOptions.onTrailer` exposes received trailing metadata, including for failed calls, as project-owned `FlightResponseMetadata`. Values are arrays of strings or copied `Uint8Array` values. Transport errors retain their existing `ClientError` type, `code`, and `details`. See the [error detail example](./guides/index.md#read-error-details) for accessing PyArrow `FlightError.extra_info` without decoding application payloads in the transport layer.
 

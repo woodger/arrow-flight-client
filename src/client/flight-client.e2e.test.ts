@@ -1,5 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { getEventListeners } from 'node:events';
 import { Message, tableFromArrays, util } from 'apache-arrow';
 import { ClientError, createServer, ServerError, Status } from 'nice-grpc';
 import type { CallContext } from 'nice-grpc';
@@ -8,6 +9,7 @@ import { encodeFlightData } from './ipc';
 import { encodeDescriptor } from './protocol';
 import { pathDescriptor } from './types';
 import type { FlightResponseMetadata } from './types';
+import type { FlightStreamReader } from './flight-stream-reader';
 import { FlightServiceDefinition } from '../generated/Flight';
 import type {
   FlightData,
@@ -678,6 +680,111 @@ describe('Flight client integration', () => {
     }
   });
 
+  for (const withDeadline of [false, true]) {
+    test(`aborts an established unary call on close${withDeadline ? ' with a deadline' : ''}`, async () => {
+      let markStarted: () => void = () => undefined;
+      const started = new Promise<void>((resolve) => {
+        markStarted = resolve;
+      });
+      const server = createServer();
+      server.add(FlightServiceDefinition, createFlightService({
+        async getFlightInfo(_request, context) {
+          markStarted();
+          return waitForCancellation(context.signal);
+        }
+      }));
+      const port = await server.listen('127.0.0.1:0');
+      const client = new FlightClient(`127.0.0.1:${port}`);
+      const call = client.getFlightInfo(pathDescriptor('closing'), {
+        ...(withDeadline ? { deadline: new Date(Date.now() + 10_000) } : {})
+      });
+      const outcome = call.then(() => undefined, (error: unknown) => error);
+
+      try {
+        await started;
+        await client.close();
+        await assertAbortedPromptly(outcome);
+      }
+      finally {
+        await client.close();
+        server.forceShutdown();
+        await outcome;
+      }
+    });
+  }
+
+  test('aborts an established streaming call on close', async () => {
+    let markStarted: () => void = () => undefined;
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *listActions(_request, context) {
+        markStarted();
+        await waitForCancellation(context.signal);
+        yield* [];
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+    const next = client.listActions()[Symbol.asyncIterator]().next();
+    const outcome = next.then(() => undefined, (error: unknown) => error);
+
+    try {
+      await started;
+      await client.close();
+      await assertAbortedPromptly(outcome);
+    }
+    finally {
+      await client.close();
+      server.forceShutdown();
+      await outcome;
+    }
+  });
+
+  test('releases caller cancellation for a download closed before iteration', async () => {
+    const table = tableFromArrays({ id: [1] });
+    let markCancelled: () => void = () => undefined;
+    const cancelled = new Promise<void>((resolve) => {
+      markCancelled = resolve;
+    });
+    const server = createServer();
+    server.add(FlightServiceDefinition, createFlightService({
+      async *doGet(_request, context) {
+        context.signal.addEventListener('abort', markCancelled, { once: true });
+        yield* encodeFlightData(encodeDescriptor(pathDescriptor('closing')), table);
+        await waitForCancellation(context.signal);
+      }
+    }));
+    const port = await server.listen('127.0.0.1:0');
+    const client = new FlightClient(`127.0.0.1:${port}`);
+    const controller = new AbortController();
+    let reader: FlightStreamReader | undefined;
+
+    try {
+      reader = await client.doGet(Buffer.from('ticket'), {
+        signal: controller.signal
+      });
+
+      await client.close();
+      assert.strictEqual(getEventListeners(controller.signal, 'abort').length, 0);
+      const outcome = reader.readAll().then(
+        () => undefined,
+        (error: unknown) => error
+      );
+
+      await assertAbortedPromptly(
+        Promise.all([cancelled, outcome]).then(([, error]) => error)
+      );
+    }
+    finally {
+      server.forceShutdown();
+      await client.close();
+      await reader?.cancel();
+    }
+  });
+
   test('closes the owned channel', async () => {
     const server = createServer();
     server.add(FlightServiceDefinition, createFlightService({
@@ -762,4 +869,23 @@ function waitForCancellation(signal: AbortSignal): Promise<never> {
       signal.addEventListener('abort', cancel, { once: true });
     }
   });
+}
+
+async function assertAbortedPromptly(outcome: Promise<unknown>): Promise<void> {
+  let timeout: NodeJS.Timeout | undefined;
+
+  try {
+    const error = await Promise.race([
+      outcome,
+      new Promise<undefined>((resolve) => {
+        timeout = setTimeout(() => resolve(undefined), 500);
+      })
+    ]);
+
+    assert.ok(error instanceof Error, 'The active call must reject after close');
+    assert.strictEqual(error.name, 'AbortError');
+  }
+  finally {
+    clearTimeout(timeout);
+  }
 }
